@@ -440,7 +440,9 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                             mService.write(textToSend.getBytes());
                             //end of new code
 
-                            takeSc(getWindow().findViewById(R.id.viewFinder));//new code under all that
+                            saveBitmap(previewView.getBitmap(), "gs_");
+
+                            //takeSc(getWindow().findViewById(R.id.viewFinder));//new code under all that
                             /*
                             ByteArrayOutputStream stream=new ByteArrayOutputStream();
                             sc.compress(Bitmap.CompressFormat.PNG,100, stream);
@@ -531,7 +533,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                                 mLogDetectWriter.appendData(LogWriter.dataToString(Calendar.getInstance().getTime(), -2, mCalibrator.getRefPoint(), 0, NumberOfMusicians));
                             }
                             else {
-                                mLogDetectWriter.appendData(String.format("%s,%d,%f,%f,%f,%f,%f,%f,%d)", Calendar.getInstance().getTime(), -1, -1, -1, -1,  weight_base, minValue, maxValue, NumberOfMusicians));
+                                mLogDetectWriter.appendData(String.format("%s,%d,%f,%f,%f,%f,%f,%f,%d\n", Calendar.getInstance().getTime(), -1, -1.0, -1.0, -1.0,  weight_base, minValue, maxValue, NumberOfMusicians));
                             }
                             break;
                         case SET_MAX_VALUE:
@@ -639,7 +641,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
         mLogRFWriter.appendData(LogWriter.rfPositionToString(Calendar.getInstance().getTime(), new Point3(0,0,0)));
         //mLogDetectWriter.appendData(LogWriter.dataToString(Calendar.getInstance().getTime(), -1, new Point3(0,0,0), 0, NumberOfMusicians));
-        mLogDetectWriter.appendData(String.format("%s,%d,%f,%f,%f,%f,%f,%f,%d)", Calendar.getInstance().getTime(), -1, -1, -1, -1,  weight_base, minValue, maxValue, NumberOfMusicians));
+        mLogDetectWriter.appendData(String.format("%s,%d,%f,%f,%f,%f,%f,%f,%d\n", Calendar.getInstance().getTime(), 1, -1.0, -1.0, -1.0,  weight_base, minValue, maxValue, NumberOfMusicians));
 
         // Get status view by id
         mStatus = findViewById(R.id.textViewStatusDetails);
@@ -802,9 +804,9 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             }
 //BT STUFF
             //initiate server
-            ServerClass serverClass = new ServerClass();
-            serverClass.start();
-            //cameraState = !cameraState;
+            //ServerClass serverClass = new ServerClass();
+//            serverClass.start();
+            ///cameraState = !cameraState;
             //mOpenCvCameraView.setVisibility(cameraState);
 
         });
@@ -904,7 +906,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             StopSound(0);
 
             saveBitmap(previewView.getBitmap(), "pv_");
-            saveMatToBitmap(inputFrame.rgba(), "rgba_");
+            //saveMatToBitmap(inputFrame.rgba(), "rgba_");
         }
         if(BaseFrame != null) {
 
@@ -943,7 +945,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             }
 
             setStatus(mTrackerText, String.format("Metric: %d\nAVG: %.1f ( B: %.1f\t, L: %.1f)\nW: %.2f\t (MN: %.0f\tMX: %.0f)", currentPersonCounter, final_sum, base_sum, flow_sum,  weight_base, minValue, maxValue, NumberOfMusicians));
-            mLogDetectWriter.appendData(String.format("%s,%d,%f,%f,%f,%f,%f,%f,%d)", Calendar.getInstance().getTime(), currentPersonCounter, final_sum, base_sum, flow_sum,  weight_base, minValue, maxValue, NumberOfMusicians));
+            mLogDetectWriter.appendData(String.format("%s,%d,%f,%f,%f,%f,%f,%f,%d\n", Calendar.getInstance().getTime(), currentPersonCounter, final_sum, base_sum, flow_sum,  weight_base, minValue, maxValue, NumberOfMusicians));
         }
 
         LastFrame = frameProcessed.clone();
