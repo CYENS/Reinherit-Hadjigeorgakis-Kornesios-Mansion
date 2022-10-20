@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?><!-- Copyright (C) 2014 The Android Open Source Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <string name="app_name">Reinherit Remote</string>
+    <string name="status">Status:</string>
+
+    <!--  Bluetooth -->
+    <string name="send">Send</string>
+    <string name="not_connected">You are not connected to a device</string>
+    <string name="bt_not_enabled_leaving">Bluetooth was not enabled. Leaving Bluetooth.</string>
+    <string name="title_connecting">connecting…</string>
+    <string name="title_connected_to">connected to <xliff:g id="device_name">%1$s</xliff:g></string>
+    <string name="title_not_connected">not connected</string>
+
+    <!--  DeviceListActivity -->
+    <string name="scanning">scanning for devices…</string>
+    <string name="select_device">Select device</string>
+    <string name="none_paired">No devices have been paired</string>
+    <string name="none_found">No devices found</string>
+    <string name="title_paired_devices">Paired Devices</string>
+    <string name="title_other_devices">Other Available Devices</string>
+    <string name="button_scan">Scan for devices</string>
+
+    <!-- Options Menu -->
+    <string name="secure_connect">Connect a device - Secure</string>
+    <string name="insecure_connect">Connect a device - Insecure</string>
+    <string name="discoverable">Make discoverable</string>
+
+    <!-- Permissions -->
+    <string name="permission_bluetooth_granted">Bluetooth permissions granted</string>
+    <string name="permission_bluetooth_denied">Bluetooth permissions denied</string>
+    <string name="permission_location_fine_granted">Access fine location permissions granted</string>
+    <string name="permission_location_fine_denied">Access fine location permissions denied</string>
+    <string name="permission_location_coarse_granted">Access coarse location permissions granted</string>
+    <string name="permission_location_coarse_denied">Access coarse location permissions denied</string>
+
+
+    <!-- UI -->
+    <string name="start_sound">Start Sound</string>
+    <string name="stop_sound">Stop Sound</string>
+    <string name="slider_freq">Frequency (Hz)</string>
+    <string name="stop">Stop</string>
+    <string name="start">Start</string>
+    <string name="reset_camera_pose">Reset camera pose</string>
+    <string name="get_status">Get status</string>
+    <string name="test">test</string>
+    <string name="title_tracker">Tracker</string>
+</resources>

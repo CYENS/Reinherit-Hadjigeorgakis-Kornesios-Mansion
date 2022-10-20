@@ -1,0 +1,44 @@
+[
+  {
+    "level_": 0,
+    "message_": "Start JSON generation. Platform version: 21 min SDK version: x86",
+    "file_": "C:\\Users\\FotosFrangoudes\\Documents\\ITICA\\Reinherit\\Reinherit\\openCvSdk460\\libcxx_helper\\CMakeLists.txt",
+    "tag_": "debug|x86",
+    "diagnosticCode_": 0,
+    "memoizedIsInitialized": 1,
+    "unknownFields": {
+      "fields": {},
+      "fieldsDescending": {}
+    },
+    "memoizedSize": -1,
+    "memoizedHashCode": 342090801
+  },
+  {
+    "level_": 0,
+    "message_": "JSON \u0027C:\\Users\\FotosFrangoudes\\Documents\\ITICA\\Reinherit\\Reinherit\\openCvSdk460\\.cxx\\Debug\\4am2e6v6\\x86\\android_gradle_build.json\u0027 was up-to-date",
+    "file_": "C:\\Users\\FotosFrangoudes\\Documents\\ITICA\\Reinherit\\Reinherit\\openCvSdk460\\libcxx_helper\\CMakeLists.txt",
+    "tag_": "debug|x86",
+    "diagnosticCode_": 0,
+    "memoizedIsInitialized": 1,
+    "unknownFields": {
+      "fields": {},
+      "fieldsDescending": {}
+    },
+    "memoizedSize": -1,
+    "memoizedHashCode": -531441754
+  },
+  {
+    "level_": 0,
+    "message_": "JSON generation completed without problems",
+    "file_": "C:\\Users\\FotosFrangoudes\\Documents\\ITICA\\Reinherit\\Reinherit\\openCvSdk460\\libcxx_helper\\CMakeLists.txt",
+    "tag_": "debug|x86",
+    "diagnosticCode_": 0,
+    "memoizedIsInitialized": 1,
+    "unknownFields": {
+      "fields": {},
+      "fieldsDescending": {}
+    },
+    "memoizedSize": -1,
+    "memoizedHashCode": 133979966
+  }
+]

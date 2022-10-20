@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:opencv="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/rootView"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000">
+
+    <androidx.camera.view.PreviewView
+        android:id="@+id/viewFinder"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <org.opencv.android.JavaCameraView
+        android:id="@+id/CameraView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#00FFFFFF"
+        android:visibility="invisible"
+        opencv:show_fps="true" />
+
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:visibility="visible">
+
+        <EditText
+            android:id="@+id/editDeviceName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:ems="12"
+            android:inputType="text"
+            android:minHeight="32dp"
+            android:text="NoNameDevice"
+            android:textColor="#FF0000"
+            android:textColorHint="#FFFFFF"
+            android:textSize="14sp" />
+
+        <com.google.android.material.slider.Slider
+            android:id="@+id/sliderFreq"
+            android:layout_width="300sp"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:layout_marginBottom="120dp"
+            android:contentDescription="@string/slider_freq"
+            android:stepSize="20.0"
+            android:value="0"
+            android:valueFrom="0.0"
+            android:valueTo="2000.0" />
+
+        <TextView
+            android:id="@+id/sliderTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:layout_marginBottom="113dp"
+            android:text="@string/slider_freq"
+            android:textColor="#FF0000"
+            android:textSize="13sp" />
+
+        <Button
+            android:id="@+id/startStopButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:layout_marginBottom="55dp"
+            android:text="@string/start_stop_sound" />
+
+        <Button
+            android:id="@+id/TurnOnOffCamera"
+            android:layout_width="80dp"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="55dp"
+            android:text="camera on/off"
+            android:textSize="10sp" />
+
+        <Button
+            android:id="@+id/DefaultSoundOnOff"
+            android:layout_width="80dp"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginRight="2dp"
+            android:layout_marginBottom="55dp"
+            android:text="Music On/Off"
+            android:textSize="10sp" />
+
+        <Button
+            android:id="@+id/setBaseImage"
+            android:layout_width="80dp"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginRight="2dp"
+            android:layout_marginBottom="2dp"
+            android:text="Set base image"
+            android:textSize="8sp" />
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:id="@+id/textViewDeviceID"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:textColor="#FF0000"
+                android:textSize="11sp"
+                android:translationX="-5dp"
+                android:translationY="4dp" />
+
+            <TextView
+                android:id="@+id/textViewConnectionStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#FF0000"
+                android:textSize="13sp"
+                android:translationX="15dp"
+                android:translationY="35dp" />
+
+            <TextView
+                android:id="@+id/textViewStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/status"
+                android:textColor="#FF0000"
+                android:textSize="16sp"
+                android:translationX="15dp"
+                android:translationY="55dp" />
+
+            <TextView
+                android:id="@+id/textViewStatusDetails"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textColor="#FF0000"
+                android:textSize="16sp"
+                android:translationX="75dp"
+                android:translationY="55dp" />
+
+            <TextView
+                android:id="@+id/textViewTracker"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textColor="#FF0000"
+                android:textSize="16sp"
+                android:translationX="10dp"
+                android:translationY="75dp" />
+
+        </RelativeLayout>
+
+    </RelativeLayout>
+
+</FrameLayout>

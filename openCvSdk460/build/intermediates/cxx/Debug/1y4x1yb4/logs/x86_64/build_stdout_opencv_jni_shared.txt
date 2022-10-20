@@ -1,0 +1,2 @@
+ninja: Entering directory `C:\Users\FotosFrangoudes\Downloads\Reinherit\openCvSdk460\.cxx\Debug\1y4x1yb4\x86_64'
+ninja: no work to do.

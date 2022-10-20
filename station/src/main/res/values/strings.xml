@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="app_name">Reinherit Station</string>
+
+    <string name="re_calibrate">Re-calibrate camera</string>
+    <string name="re_estimate_camera_pose">Reset camera pose</string>
+    <string name="set_reference_point">Set reference point</string>
+    <string name="enable_visualize_results">Enable result visualization</string>
+    <string name="disable_visualize_results">Disable result visualization</string>
+
+    <!-- Processing status -->
+    <string name="status">Status:</string>
+    <string name="status_detecting">Detecting (<xliff:g id="counter">%1$d</xliff:g>)</string>
+    <string name="status_tracking">Tracking (<xliff:g id="counter">%1$d</xliff:g>)</string>
+    <string name="status_set_reference_point">Awaiting for reference point selection</string>
+    <string name="status_search_chessboard">Searching for chessboard corners</string>
+    <string name="status_camera_pose_est">Estimating camera pose</string>
+    <string name="status_camera_calibration">Calibrating camera</string>
+    <string name="status_awaiting_image_capture">Awaiting image capture</string>
+
+    <!-- Bluetooth status -->
+    <string name="title_connecting">connecting...</string>
+    <string name="title_connected_to">connected to <xliff:g id="device_name">%1$s</xliff:g></string>
+    <string name="title_not_connected">not connected</string>
+
+    <!-- Permissions -->
+    <string name="permission_bluetooth_granted">Bluetooth permissions granted</string>
+    <string name="permission_bluetooth_denied">Bluetooth permissions denied</string>
+    <string name="permission_location_fine_granted">Access fine location permissions granted</string>
+    <string name="permission_location_fine_denied">Access fine location permissions denied</string>
+    <string name="permission_location_coarse_granted">Access coarse location permissions granted</string>
+    <string name="permission_location_coarse_denied">Access coarse location permissions denied</string>
+    <string name="camera_permission_granted">Camera permission granted</string>
+    <string name="camera_permission_denied">Camera permission denied</string>
+    <string name="ex_storage_permission_granted">External storage permission granted</string>
+    <string name="ex_storage_permission_denied">External storage permission denied</string>
+
+    <string name="start_stop_sound">Start/Stop Sound</string>
+    <string name="slider_freq">Frequency (Hz)</string>
+
+
+</resources>

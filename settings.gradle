@@ -1,0 +1,23 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        google()
+        mavenCentral()
+    }
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+rootProject.name = "Reinherit"
+include ':station'
+include ':opencv-android-sdk-with-contrib'
+include ':remote'
+include ':common-lib'
+
+
+include ':openCvSdk460'
+include ':openCvSdk460'

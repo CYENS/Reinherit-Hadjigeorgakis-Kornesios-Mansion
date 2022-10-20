@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/re_calibrate"
+        android:title="@string/re_calibrate" />
+    <item
+        android:id="@+id/re_estimate_camera_pose"
+        android:title="@string/re_estimate_camera_pose" />
+    <item
+        android:id="@+id/set_reference_point"
+        android:title="@string/set_reference_point" />
+    <item
+        android:id="@+id/visualize_results"
+        android:title="@string/enable_visualize_results" />
+</menu>
