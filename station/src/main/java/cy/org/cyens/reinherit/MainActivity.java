@@ -531,7 +531,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                                 mLogDetectWriter.appendData(LogWriter.dataToString(Calendar.getInstance().getTime(), -2, mCalibrator.getRefPoint(), 0, NumberOfMusicians));
                             }
                             else {
-                                mLogDetectWriter.appendData(LogWriter.dataToString(Calendar.getInstance().getTime(), -2, new Point3(0,0,0), 0, NumberOfMusicians));
+                                mLogDetectWriter.appendData(String.format("%s,%d,%f,%f,%f,%f,%f,%f,%d)", Calendar.getInstance().getTime(), -1, -1, -1, -1,  weight_base, minValue, maxValue, NumberOfMusicians));
                             }
                             break;
                         case SET_MAX_VALUE:
@@ -638,7 +638,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         mLogRFWriter = new LogWriter(getApplicationContext(), deviceID + "_rf_coordinates.csv");
 
         mLogRFWriter.appendData(LogWriter.rfPositionToString(Calendar.getInstance().getTime(), new Point3(0,0,0)));
-        mLogDetectWriter.appendData(LogWriter.dataToString(Calendar.getInstance().getTime(), -1, new Point3(0,0,0), 0, NumberOfMusicians));
+        //mLogDetectWriter.appendData(LogWriter.dataToString(Calendar.getInstance().getTime(), -1, new Point3(0,0,0), 0, NumberOfMusicians));
+        mLogDetectWriter.appendData(String.format("%s,%d,%f,%f,%f,%f,%f,%f,%d)", Calendar.getInstance().getTime(), -1, -1, -1, -1,  weight_base, minValue, maxValue, NumberOfMusicians));
 
         // Get status view by id
         mStatus = findViewById(R.id.textViewStatusDetails);
@@ -941,7 +942,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 lastPersonCounter = averageCurrentPersonCounter;
             }
 
-            setStatus(mTrackerText, String.format("Metric: %d\nAVG: %.1f ( B: %.1f\t, L: %.1f)\nW: %.2f\t (MN: %.0f\tMX: %.0f)", currentPersonCounter, final_sum, base_sum, flow_sum,  weight_base, minValue, maxValue));
+            setStatus(mTrackerText, String.format("Metric: %d\nAVG: %.1f ( B: %.1f\t, L: %.1f)\nW: %.2f\t (MN: %.0f\tMX: %.0f)", currentPersonCounter, final_sum, base_sum, flow_sum,  weight_base, minValue, maxValue, NumberOfMusicians));
+            mLogDetectWriter.appendData(String.format("%s,%d,%f,%f,%f,%f,%f,%f,%d)", Calendar.getInstance().getTime(), currentPersonCounter, final_sum, base_sum, flow_sum,  weight_base, minValue, maxValue, NumberOfMusicians));
         }
 
         LastFrame = frameProcessed.clone();
