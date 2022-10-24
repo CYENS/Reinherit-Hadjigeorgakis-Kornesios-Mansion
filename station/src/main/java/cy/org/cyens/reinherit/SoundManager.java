@@ -21,7 +21,7 @@ public class SoundManager {
     //This is a dictionary to save every mac address as a key and the device name as a value
     public Hashtable<Integer, MusicThread> mMusicThreads = new Hashtable<Integer, MusicThread>();
 
-    private final MediaPlayer backgroundAudioMediaPlayer;
+    private MusicThread backgroundAudioMediaThread;
     private boolean isBackgroundAudioPlaying = false;
 
     protected static MediaPlayer createMediaPlayer(int id, String filePrefix, String fileExtension, Activity parentActivity){
@@ -37,11 +37,17 @@ public class SoundManager {
         setLoopSounds(loopSounds);
         initializeSounds(folder, soundFilePrefix);
 
-        if (includeBackgroundAudio)
-            backgroundAudioMediaPlayer = createMediaPlayer(0, soundFilePrefix, soundFileExtension, parentActivity);
-        else
-            backgroundAudioMediaPlayer = null;
+        startBackgroundAudio(includeBackgroundAudio);
 
+    }
+
+    private void startBackgroundAudio(boolean includeBackgroundAudio) {
+        if (includeBackgroundAudio) {
+            backgroundAudioMediaThread = new MusicThread(0, mSoundFilesNamePrefix, mSoundFileExtension, mParentActivity, mLoopSounds);
+            backgroundAudioMediaThread.start();
+        }
+        else
+            backgroundAudioMediaThread = null;
     }
 
     public void onDestroy() {
@@ -63,9 +69,9 @@ public class SoundManager {
     }
 
     public void playSound(int index){
-        if (backgroundAudioMediaPlayer != null && !isBackgroundAudioPlaying) {
+        if (backgroundAudioMediaThread != null && !isBackgroundAudioPlaying) {
             isBackgroundAudioPlaying = true;
-            backgroundAudioMediaPlayer.start();
+            startBackgroundAudio(true);
         }
 
         stopSound(index+1);
@@ -84,9 +90,9 @@ public class SoundManager {
     }
 
     public void stopSound(int index){
-        if (index == 0 && backgroundAudioMediaPlayer != null) {
+        if (index == 0 && backgroundAudioMediaThread != null) {
             isBackgroundAudioPlaying = false;
-            backgroundAudioMediaPlayer.stop();
+            backgroundAudioMediaThread.stopPlayback();
         }
 
         for(int i = index; i <= mMaxSounds; i++){

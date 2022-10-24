@@ -55,7 +55,7 @@
     <string name="slider_freq">Frequency (Hz)</string>
     <string name="stop">Stop</string>
     <string name="start">Start</string>
-    <string name="button_reset_log">Reset log</string>
+    <string name="button_reset_log">Reset\nlog</string>
     <string name="get_status">Get status</string>
     <string name="test">test</string>
     <string name="title_tracker">Tracker</string>
