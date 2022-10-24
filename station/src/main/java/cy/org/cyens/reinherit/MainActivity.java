@@ -16,7 +16,6 @@ import android.os.Looper;
 import android.os.Message;
 import android.provider.Settings;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
@@ -35,13 +34,12 @@ import com.google.android.material.slider.Slider;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.opencv.android.OpenCVLoader;
-import org.opencv.core.Mat;
-import org.opencv.core.Size;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
 import java.util.Scanner;
@@ -51,33 +49,24 @@ import cy.org.cyens.common.Constants;
 
 
 public class MainActivity extends AppCompatActivity {
-    private static final int MAX_AUDIO_FILES = 5;
-    private static final boolean USE_SQUARE_FRAME = false;
-
-    private static final int CAMERA_REQUEST_CODE = 100;
-    private static final int EXTERNAL_STORAGE_REQUEST_CODE = 101;
+    //region Constants *****************************************************************************
     private static final int BLUETOOTH_REQUEST_CODE = 102;
     private static final int ACCESS_FINE_LOCATION_CODE = 103;
     private static final int ACCESS_COARSE_LOCATION_CODE = 104;
+    //endregion Constants **************************************************************************
 
-    private static final int REQUEST_ENABLE_BT = 3;
+    private static final int MAX_AUDIO_FILES = 5;
 
-    private static final int CAMERA_INDEX = 0;
-    private static final int PROCESSING_FRAME_SIZE = 300; // px
+    private static final int CAMERA_REQUEST_CODE = 100;
+    private static final int EXTERNAL_STORAGE_REQUEST_CODE = 101;
+
     // new code
-    private static final int FLOW_HEIGHT = 360; // px 540 432 360
-    private static final int FLOW_WIDTH = 640; // px  960 768 640
-
     private static final int MAX_PERSON_COUNTER_HISTORY_SIZE = 8;
     // end new code
 
-    private static final int FRAME_CALL_GC = 200;
     private static final String TAG = MainActivity.class.getName();
-    private static final Size FLOW_FRAME_SIZE = new Size(FLOW_WIDTH, FLOW_HEIGHT);
-    private static final String PATCH_FILENAME = "patch.pd";
-
-    private final Mat frameProcessed = new Mat();
-    private int frameCounter = 0;
+    @SuppressLint("SimpleDateFormat")
+    private static final SimpleDateFormat mDateFormatter = new SimpleDateFormat("yyyyMMdd_HHmmssSS");
 
     private LogWriter mLogDetectWriter;
 
@@ -87,6 +76,8 @@ public class MainActivity extends AppCompatActivity {
     private TextView mTrackerText;
     private TextView mConnectionStatus;
 
+    private EditText mDeviceNameText;
+
     //new variables
     //define the media player here
     private static MediaPlayer mediaPlayer;
@@ -94,22 +85,7 @@ public class MainActivity extends AppCompatActivity {
 
     //define some log variables here
     private int NumberOfMusicians = 0;
-    //flag to capture a frame of the camera into a two dimensional matrix
-    private boolean CaptureFrame = false;
-
-    private static String BluetoothName;
-
-    private Mat BaseFrame = null;
-
-    private Mat LastFrame = null;
-
-    private static final double noise_value = 10;
-
-    private double weight_base, weight_flow, base_sum;
-
-    private double minValue = 5;
-
-    private double maxValue = 60;
+    private int mChangeMetricThreshold = 10;
 
     private PreviewView mPreviewView;
 
@@ -128,13 +104,34 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG, "Opencv loaded");
     }
 
+
+    public class PeopleCounterChangeCallback implements CameraInputManager.IPersonCounterChangeCallback
+    {
+        @Override
+        public void OnPersonCounterChange(@NonNull int counter) {
+            mSoundManager.playSound(counter);
+        }
+    }
+    private final PeopleCounterChangeCallback mPeopleCounterChangeCallback = new PeopleCounterChangeCallback();
+
+    public class MetricsUpdateCallback implements CameraInputManager.IOnMetricsUpdateCallback
+    {
+        @Override
+        public void onMetricsUpdated() {
+            CameraInputManager.MetricsData md = mCameraManager.getMetricsData();
+            setStatus(mTrackerText, String.format(Locale.US, "Metric: %d\nAVG: %.1f ( B: %.1f\t, F: %.1f\t, C: %.1f)\nW: %.2f\t (MN: %.0f\tMX: %.0f)", md.getCounterMetric(), md.mGrandMetric, md.mBaseMetric, md.mFlowMetric, md.mChangeMetric,  md.mBaseMetricWeight, md.mMinMetricValue, md.mMaxMetricValue, NumberOfMusicians));
+            mLogDetectWriter.appendData(String.format(Locale.US, "%s,%d,%f,%f,%f,%f,%f,%f,%d)", mDateFormatter.format(Calendar.getInstance().getTime()), md.getCounterMetric(), md.mGrandMetric, md.mBaseMetric, md.mFlowMetric,  md.mBaseMetricWeight, md.mMinMetricValue, md.mMaxMetricValue, NumberOfMusicians));
+        }
+    }
+    private final MetricsUpdateCallback mMetricsUpdatedCallback = new MetricsUpdateCallback();
+
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == CAMERA_REQUEST_CODE) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Toast.makeText(this, R.string.camera_permission_granted, Toast.LENGTH_LONG).show();
-                mCameraManager.initializeCamera(this);
+                mCameraManager.initializeCamera();
             } else {
                 Toast.makeText(this, R.string.camera_permission_denied, Toast.LENGTH_LONG).show();
             }
@@ -172,6 +169,81 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        File dataDir = new File(Environment.getExternalStorageDirectory().getPath() + "/Reinherit/");
+        File logDir = new File(dataDir.getPath() + "/Logs/");
+        if (!logDir.exists()){
+            logDir.mkdirs();
+        }
+        File imagesDir = new File(dataDir.getPath() + "/Images/");
+        if (!imagesDir.exists()){
+            imagesDir.mkdirs();
+        }
+        mPreviewView = this.findViewById(R.id.viewFinder);
+        mDeviceNameText = (EditText)findViewById(R.id.editDeviceName);
+
+        // Required permissions for camera access
+        mCameraManager = new CameraInputManager(this);
+        mCameraManager.setOutputDir(imagesDir.getAbsolutePath() + "/");
+        readWeight();
+        mCameraManager.getMetricsData().setMaxCounterValue(MAX_PERSON_COUNTER_HISTORY_SIZE);
+        mCameraManager.setMetricsUpdateCallback(mMetricsUpdatedCallback);
+        mCameraManager.setPersonCounterChangeCallback(mPeopleCounterChangeCallback);
+        mCameraManager.setChangeThreshold(mChangeMetricThreshold);
+
+        mSoundManager = new SoundManager(MAX_AUDIO_FILES, "/Reinherit/", "sound", "wav", this);
+
+        // Required permissions for external storage management
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) { // for android sdk >=30
+            if (!Environment.isExternalStorageManager()) {
+                Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                Uri uri = Uri.fromParts("package", getPackageName(), null);
+                intent.setData(uri);
+                startActivity(intent);
+            }
+        } else if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, CAMERA_REQUEST_CODE);
+        }
+
+        // Get status view by id
+        mTrackerText = findViewById(R.id.textViewTracker);
+        mConnectionStatus = findViewById(R.id.textViewConnectionStatus);
+
+        addUiListeners();
+
+        mBluetoothManager = new BluetoothManager(this);
+        mDeviceNameText = (EditText)findViewById(R.id.editDeviceName);
+
+        readDeviceName(); //read the device name from the txt here
+
+        // Ensure device is discoverable by others
+        mBluetoothManager.ensureDiscoverable();
+    }
+
+    @SuppressLint("MissingPermission")
+    @Override
+    public void onStart() {
+        super.onStart();
+        mBluetoothManager.onStart(this, mHandler);
+
+        // TODO: ensure app has permissions before retrieving device name
+        String deviceID = mDeviceNameText.getText().toString();
+        try {
+            deviceID = BluetoothAdapter.getDefaultAdapter().getName();
+            ((TextView) findViewById(R.id.textViewDeviceID)).setText(deviceID);
+        }catch(Exception e) {
+            Log.w(TAG, e.getMessage());
+        }
+
+        mLogDetectWriter = new LogWriter(getApplicationContext(), deviceID + "_log.csv");
+        CameraInputManager.MetricsData md = mCameraManager.getMetricsData();
+        mLogDetectWriter.appendData(String.format(Locale.US, "%s,%d,%f,%f,%f,%f,%f,%f,%d\n", mDateFormatter.format(Calendar.getInstance().getTime()), 1, -1.0, -1.0, -1.0,  md.mBaseMetricWeight, md.mMinMetricValue, md.mMaxMetricValue, NumberOfMusicians));
+    }
+
+    @Override
     public void onResume() {
         super.onResume();
         mBluetoothManager.onResume();
@@ -189,13 +261,6 @@ public class MainActivity extends AppCompatActivity {
         mBluetoothManager.onDestroy();
     }
 
-    @SuppressLint("MissingPermission")
-    @Override
-    public void onStart() {
-        super.onStart();
-        mBluetoothManager.onStart(this, mHandler);
-    }
-
     /**
      * The Handler that gets information back from the BluetoothService
      */
@@ -206,10 +271,8 @@ public class MainActivity extends AppCompatActivity {
                 case Constants.MESSAGE_STATE_CHANGE:
                     switch (msg.arg1) {
                         case BluetoothService.STATE_CONNECTED:
-                            EditText DeviceNameText   = (EditText)findViewById(R.id.editDeviceName);
-                            BluetoothName = String.valueOf(DeviceNameText.getText());//new code below
-                            BluetoothName = "n"+BluetoothName;
-                            mBluetoothManager.write(BluetoothName.getBytes());
+                            mBluetoothManager.setName("n" + String.valueOf(mDeviceNameText.getText()));//new code below
+                            mBluetoothManager.sendDeviceNameOverBluetooth();
                             setStatus(mConnectionStatus, getString(R.string.title_connected_to, mConnectedDeviceName));
                             break;
                         case BluetoothService.STATE_CONNECTING:
@@ -232,19 +295,17 @@ public class MainActivity extends AppCompatActivity {
                     String readMessageStr = new String(readBuf, 0, msg.arg1);
                     JSONObject readMessageJson;
 
-                    int value = 0;
+                    int valueInt = 0;
                     //new code to get the double
-                    double value2 =0;
+                    double valueDouble =0;
                     Constants.COMMANDS id;
                     try {
                         readMessageJson = new JSONObject(readMessageStr);
                         id = Constants.COMMANDS.fromString(readMessageJson.getString("id"));
                         if (readMessageJson.has("val")){
-                            value = readMessageJson.getInt("val");
-                            //new code here also to save the double
-                            value2 = readMessageJson.getDouble("val");
+                            valueInt = readMessageJson.getInt("val");
+                            valueDouble = readMessageJson.getDouble("val");
                         }
-
                     } catch (JSONException e) {
                         e.printStackTrace();
                         return;
@@ -260,34 +321,14 @@ public class MainActivity extends AppCompatActivity {
                             //end of new code
 
                             ImageUtilities.saveBitmap(mPreviewView.getBitmap(), "gs_");
-
-                            //takeSc(getWindow().findViewById(R.id.viewFinder));//new code under all that
-                            /*
-                            ByteArrayOutputStream stream=new ByteArrayOutputStream();
-                            sc.compress(Bitmap.CompressFormat.PNG,100, stream);
-                            byte[] imageBytes = stream.toByteArray();
-                            int subArraySize=400;
-
-                            mService.write(String.valueOf(imageBytes.length).getBytes());
-
-                            for(int i=0;i<imageBytes.length;i+=subArraySize){
-                                byte[] tempArray;
-                                tempArray= Arrays.copyOfRange(imageBytes,i,Math.min(imageBytes.length,i+subArraySize));
-                                mService.write(tempArray);
-                            }
-
-                             */
-
                             break;
                         case RESET_CAMERA_POSE:
                             break;
                         case SET_FREQ:
-                            //PdBase.sendFloat("freq", Math.max(0, value));
                             Slider slider = findViewById(R.id.sliderFreq); //even more new code here
-                            slider.setValue(value);
+                            slider.setValue(valueInt);
                             break;
                         case START:
-                            //PdBase.sendFloat("start", 1.0f);
                             soundStopped = false;
                             break;
                         case STOP:
@@ -320,36 +361,48 @@ public class MainActivity extends AppCompatActivity {
                         case RAISE_VOLUME:
                             AudioManager audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
                             audioManager.adjustVolume(AudioManager.ADJUST_RAISE, AudioManager.FLAG_PLAY_SOUND);
-
                             break;
                         case LOWER_VOLUME:
                             AudioManager audioManager2 = (AudioManager) getSystemService(AUDIO_SERVICE);
                             audioManager2.adjustVolume(AudioManager.ADJUST_LOWER, AudioManager.FLAG_PLAY_SOUND);
-
                             break;
                         case SET_MUSICIANS:
-                            NumberOfMusicians = (int)value;
-                            mLogDetectWriter.appendData(String.format(Locale.US, "%s,%d,%f,%f,%f,%f,%f,%f,%d\n", Calendar.getInstance().getTime(), -1, -1.0, -1.0, -1.0,  weight_base, minValue, maxValue, NumberOfMusicians));
+                            NumberOfMusicians = (int)valueInt;
+                            CameraInputManager.MetricsData md = mCameraManager.getMetricsData();
+                            mLogDetectWriter.appendData(String.format(Locale.US, "%s,%d,%f,%f,%f,%f,%f,%f,%d\n", mDateFormatter.format(Calendar.getInstance().getTime()), -1, -1.0, -1.0, -1.0,  md.mBaseMetricWeight, md.mMinMetricValue, md.mMaxMetricValue, NumberOfMusicians));
                             break;
                         case SET_MAX_VALUE:
-                            maxValue = (int)value;
-                            saveWeight();
-                            break;
-                        case SET_MIN_VALUE:
-                            minValue = (int)value;
-                            saveWeight();
-                            break;
-                        case SET_WEIGHT:
-                            weight_base= value2;
-                            saveWeight();
-                            break;
-                        case SET_BASE_IMAGE:
-                            CaptureFrame = true;
+                            mCameraManager.getMetricsData().setMaxValue((int) valueInt);
+                            saveMetricsData();
                             try {
                                 UpdateWeightsCSV();
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
+                            break;
+                        case SET_MIN_VALUE:
+                            mCameraManager.getMetricsData().setMinValue((int) valueInt);
+                            saveMetricsData();
+                            try {
+                                UpdateWeightsCSV();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                            break;
+                        case SET_WEIGHT:
+                            mCameraManager.getMetricsData().setBaseFlowWeight((float) valueDouble);
+                            saveMetricsData();
+                            try {
+                                UpdateWeightsCSV();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                            break;
+                        case SET_BASE_IMAGE:
+                            mCameraManager.resetBaseFrame();
+                            ImageUtilities.takeScreenshot(mPreviewView, "");
+                            CameraInputManager.MetricsData md2 = mCameraManager.getMetricsData();
+                            mLogDetectWriter.appendData(String.format(Locale.US, "%s,%d,%f,%f,%f,%f,%f,%f,%d\n", mDateFormatter.format(Calendar.getInstance().getTime()), -1, -1.0, -1.0, -1.0,  md2.mBaseMetricWeight, md2.mMinMetricValue, md2.mMaxMetricValue, NumberOfMusicians));
                             break;
                     }
 
@@ -367,72 +420,6 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-
-        readWeight();
-        readDeviceName(); //read the device name from the txt here
-
-        mPreviewView = this.findViewById(R.id.viewFinder);
-
-        // Required permissions for camera access
-        mCameraManager = new CameraInputManager();
-        if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(new String[]{Manifest.permission.CAMERA}, CAMERA_REQUEST_CODE);
-        }
-        else {
-            mCameraManager.initializeCamera(this);
-        }
-
-        mSoundManager = new SoundManager(MAX_AUDIO_FILES, "/Reinherit/", "sound", "wav", this);
-
-        // Required permissions for bluetooth access
-        // Android >=10 requires location permissions for bluetooth scan
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                requestPermissions(new String[]{Manifest.permission.BLUETOOTH_SCAN,
-                        Manifest.permission.BLUETOOTH_CONNECT}, BLUETOOTH_REQUEST_CODE);
-            } else {
-                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, ACCESS_FINE_LOCATION_CODE);
-            }
-        } else {
-            requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, ACCESS_COARSE_LOCATION_CODE);
-        }
-
-        // Required permissions for external storage management
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) { // for android sdk >=30
-            if (!Environment.isExternalStorageManager()) {
-                Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
-                Uri uri = Uri.fromParts("package", getPackageName(), null);
-                intent.setData(uri);
-                startActivity(intent);
-            }
-        } else if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, CAMERA_REQUEST_CODE);
-        }
-
-        String deviceID = BluetoothAdapter.getDefaultAdapter().getName();
-        ((TextView) findViewById(R.id.textViewDeviceID)).setText(deviceID);
-
-        mLogDetectWriter = new LogWriter(getApplicationContext(), deviceID + "_log.csv");
-        mLogDetectWriter.appendData(String.format(Locale.US, "%s,%d,%f,%f,%f,%f,%f,%f,%d\n", Calendar.getInstance().getTime(), 1, -1.0, -1.0, -1.0,  weight_base, minValue, maxValue, NumberOfMusicians));
-
-        // Get status view by id
-        mTrackerText = findViewById(R.id.textViewTracker);
-        mConnectionStatus = findViewById(R.id.textViewConnectionStatus);
-
-        addUiListeners();
-
-        mBluetoothManager = new BluetoothManager();
-        mBluetoothManager.onCreate(this);
-
-        // Ensure device is discoverable by others
-        mBluetoothManager.ensureDiscoverable();
-    }
-
     private void togglePreviewVisibility(){
         int viewVisibility = mPreviewView.getVisibility();
         mPreviewView.setVisibility((viewVisibility == View.VISIBLE) ? View.INVISIBLE : View.VISIBLE);
@@ -440,17 +427,12 @@ public class MainActivity extends AppCompatActivity {
 
     private void addUiListeners() {
 
-        EditText DeviceNameText   = (EditText)findViewById(R.id.editDeviceName); //get the text UI
-        DeviceNameText.setOnEditorActionListener(new EditText.OnEditorActionListener() {
-            @Override
-            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                if (actionId == EditorInfo.IME_ACTION_DONE) {
-                    //saveDeviceName();
-                    saveWeight();
-                    return true;
-                }
-                return false;
+        mDeviceNameText.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                saveMetricsData();
+                return true;
             }
+            return false;
         });
 
         Button button = findViewById(R.id.startStopButton);
@@ -492,7 +474,8 @@ public class MainActivity extends AppCompatActivity {
 
         Button btn4 = findViewById(R.id.setBaseImage);
         btn4.setOnClickListener(v -> {
-            CaptureFrame = true;
+            mCameraManager.resetBaseFrame();
+            ImageUtilities.takeScreenshot(mPreviewView, "");
         });
     }
 
@@ -517,52 +500,36 @@ public class MainActivity extends AppCompatActivity {
         runOnUiThread(() -> status.setText(subTitle));
     }
 
-    private void readDeviceName(){
+    private boolean readDeviceName(){
         try {
-
-            //String filePath = Environment.getExternalStorageDirectory().getPath() + "/ReinheritLogs/device_name.txt"; //file path
-            String filePath = Environment.getExternalStorageDirectory().getPath() + "/ReinheritLogs/Weight.txt"; //file path
-
+            String filePath = Environment.getExternalStorageDirectory().getPath() + "/Reinherit/Logs/Weight.txt"; //file path
             File myObj = new File(filePath);
+
+            if(!myObj.exists()) return false;
+
             Scanner myReader = new Scanner(myObj);
-            EditText DeviceNameText   = (EditText)findViewById(R.id.editDeviceName); //get the view ID for the text UI
-            //DeviceNameText.setText(myReader.nextLine());
-
             //We don't want to read the whole text file just the first line
-
             int counter = 0;
-
             while (myReader.hasNextLine()) {
                 if(counter == 3){
-                    DeviceNameText.setText(myReader.nextLine());
+                    mDeviceNameText.setText(myReader.nextLine());
                     break;
                 }
                 myReader.nextLine();
                 counter++;
-                //String data = myReader.nextLine();
-                //System.out.println(data);
             }
             myReader.close();
         } catch (FileNotFoundException e) {
             System.out.println("An error occurred.");
-            EditText DeviceNameText   = (EditText)findViewById(R.id.editDeviceName); //get the view ID for the text UI
-            DeviceNameText.setText("NoNameDevice");
+            mDeviceNameText.setText("NoNameDevice");
             e.printStackTrace();
         }
+        return true;
     }
 
     // region IO
-    private void saveWeight(){
-        String filePath = Environment.getExternalStorageDirectory().getPath() + "/ReinheritLogs/Weight.txt"; //file path
-
-        String weight_to_string = String.valueOf(weight_base);
-        String min_value_to_string = String.valueOf(minValue);
-        String max_value_to_string = String.valueOf(maxValue);
-        String deviceName; //define a string to keep the name here
-        EditText DeviceNameText   = (EditText)findViewById(R.id.editDeviceName); //get the text UI
-        deviceName = String.valueOf(DeviceNameText.getText()); //assign the value
-
-
+    private void saveMetricsData(){
+        String filePath = Environment.getExternalStorageDirectory().getPath() + "/Reinherit/Logs/Weight.txt";
         try {
             File myObj = new File(filePath);
             if (myObj.createNewFile()) {
@@ -577,12 +544,9 @@ public class MainActivity extends AppCompatActivity {
 
         try {
             FileWriter myWriter = new FileWriter(filePath);
-            myWriter.append(weight_to_string + "\n"); //weight
-            myWriter.append(min_value_to_string + "\n"); //min value
-            myWriter.append(max_value_to_string + "\n"); //max value
-            myWriter.append(deviceName); //device name
+            CameraInputManager.MetricsData md = mCameraManager.getMetricsData();
+            myWriter.append(String.format(Locale.US, "%f\n%f\n%f\n%s", md.mBaseMetricWeight, md.mMinMetricValue, md.mMaxMetricValue, mDeviceNameText.getText().toString()));
             myWriter.close();
-            System.out.println("Successfully wrote to the file.");
         } catch (IOException e) {
             System.out.println("An error occurred.");
             e.printStackTrace();
@@ -592,7 +556,7 @@ public class MainActivity extends AppCompatActivity {
     private void readWeight(){
 
         try {
-            String filePath = Environment.getExternalStorageDirectory().getPath() + "/ReinheritLogs/Weight.txt"; //file path
+            String filePath = Environment.getExternalStorageDirectory().getPath() + "/Reinherit/Logs/Weight.txt"; //file path
 
             File myObj = new File(filePath);
             Scanner myReader = new Scanner(myObj);
@@ -602,13 +566,13 @@ public class MainActivity extends AppCompatActivity {
                 String data = myReader.nextLine();
                 switch (counter){
                     case 0:
-                        weight_base = Double.parseDouble(data);
+                        mCameraManager.getMetricsData().setBaseFlowWeight(Float.parseFloat(data));
                         break;
                     case 1:
-                        minValue = Double.parseDouble(data);
+                        mCameraManager.getMetricsData().setMinValue(Double.parseDouble(data));
                         break;
                     case 2:
-                        maxValue = Double.parseDouble(data);
+                        mCameraManager.getMetricsData().setMaxValue(Double.parseDouble(data));
                         break;
                 }
                 counter++;
@@ -628,11 +592,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void UpdateWeightsCSV() throws IOException {
-
-        EditText DeviceNameText   = (EditText)findViewById(R.id.editDeviceName);
-
-        FileWriter csvWriter = new FileWriter(Environment.getExternalStorageDirectory().getPath() + "/ReinheritLogs/WeightsFile.csv", true);
-        csvWriter.append(String.format("%s,%f,%f,%f\n" ,DeviceNameText.getText(),weight_base, minValue, maxValue));
+        FileWriter csvWriter = new FileWriter(Environment.getExternalStorageDirectory().getPath() + "/Reinherit/Logs/WeightsFile.csv", true);
+        CameraInputManager.MetricsData md = mCameraManager.getMetricsData();
+        csvWriter.append(String.format(Locale.US, "%s,%f,%f,%f\n", mDeviceNameText.getText(),md.mBaseMetricWeight, md.mMinMetricValue, md.mMaxMetricValue));
         csvWriter.flush();
         csvWriter.close();
     }

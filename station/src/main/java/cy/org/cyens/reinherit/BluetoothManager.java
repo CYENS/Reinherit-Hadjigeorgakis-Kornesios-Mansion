@@ -1,9 +1,11 @@
 package cy.org.cyens.reinherit;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Handler;
 import android.widget.Toast;
 
@@ -15,6 +17,11 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import cy.org.cyens.common.BluetoothService;
 
 public class BluetoothManager {
+    //region Constants *****************************************************************************
+    private static final int BLUETOOTH_REQUEST_CODE = 102;
+    private static final int ACCESS_FINE_LOCATION_CODE = 103;
+    private static final int ACCESS_COARSE_LOCATION_CODE = 104;
+    //endregion Constants **************************************************************************
     /**
      * Local Bluetooth adapter
      */
@@ -26,8 +33,12 @@ public class BluetoothManager {
 
     private Activity mParentActivity;
 
-    public void onCreate(Activity parentActivity) {
+    public String mBluetoothName;
+
+    public BluetoothManager(Activity parentActivity) {
         mParentActivity = parentActivity;
+
+        requestPermissions();
 
         // Setup Bluetooth
         // Get local Bluetooth adapter
@@ -35,9 +46,37 @@ public class BluetoothManager {
 
         // If the adapter is null, then Bluetooth is not supported
         if (mBluetoothAdapter == null) {
-            Toast.makeText(parentActivity, "Bluetooth is not available", Toast.LENGTH_LONG).show();
-            parentActivity.finish();
+            Toast.makeText(mParentActivity, "Bluetooth is not available", Toast.LENGTH_LONG).show();
+            mParentActivity.finish();
         }
+    }
+
+    public boolean requestPermissions(){
+        // Required permissions for bluetooth access
+        // Android >=10 requires location permissions for bluetooth scan
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                mParentActivity.requestPermissions(new String[]{Manifest.permission.BLUETOOTH_SCAN,
+                        Manifest.permission.BLUETOOTH_CONNECT}, BLUETOOTH_REQUEST_CODE);
+            } else {
+                mParentActivity.requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, ACCESS_FINE_LOCATION_CODE);
+            }
+        } else {
+            mParentActivity.requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, ACCESS_COARSE_LOCATION_CODE);
+        }
+        return true;
+    }
+
+    public void setName(String newName){
+        mBluetoothName = newName;
+    }
+
+    public String getName(){
+        return mBluetoothName;
+    }
+
+    public void sendDeviceNameOverBluetooth(){
+        write(mBluetoothName.getBytes());
     }
 
     public void onStart(ComponentActivity parentActivity, Handler handler){
@@ -81,8 +120,7 @@ public class BluetoothManager {
 
     @SuppressLint("MissingPermission")
     public void ensureDiscoverable() {
-        if (mBluetoothAdapter.getScanMode() !=
-                BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE) {
+        if (mBluetoothAdapter.getScanMode() != BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE) {
             Intent discoverableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
             discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 360);
             mParentActivity.startActivity(discoverableIntent);

@@ -1,8 +1,10 @@
 package cy.org.cyens.reinherit;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
@@ -30,20 +32,26 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.imgproc.Imgproc;
 
 import java.io.File;
 import java.nio.ByteBuffer;
+import java.util.Date;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 
 public class CameraInputManager {
+    //region Constants *****************************************************************************
+    private static final int CAMERA_REQUEST_CODE = 100;
+    //endregion Constants **************************************************************************
+
     //region Variables *****************************************************************************
     // Camera / Image data
     Activity mParentActivity;
     ImageCapture mImageCapture;
 
     // Analysis Data
-    FrameAnalyzer mPageAnalyzer = new FrameAnalyzer();
+    FrameAnalyzer mFrameAnalyzer = new FrameAnalyzer();
     boolean mResetBaseFrame = true;
 
     // Metric Data
@@ -51,11 +59,27 @@ public class CameraInputManager {
         public int mMaxCounterValue = 5;
 
         public double mMinMetricValue = 5, mMaxMetricValue = 40;
-        public double mBaseMetricWeight = 0.5, mFlowMetricWeight = 0.5;
-        public double mBaseMetric, mFlowMetric, mGrandMetric;
+        public float mBaseMetricWeight = 0.5f, mFlowMetricWeight = 0.5f;
+        public double mBaseMetric, mFlowMetric, mChangeMetric, mGrandMetric;
+
+        public void setMinValue(double minValue){
+            mMinMetricValue = minValue;
+        }
+
+        public void setMaxValue(double maxValue){
+            mMaxMetricValue = maxValue;
+        }
+        public void setBaseFlowWeight(float newValue){
+            mBaseMetricWeight = newValue;
+            mFlowMetricWeight = 1 - newValue;
+        }
+
+        public void setMaxCounterValue(int maxPersonCounterHistorySize) {
+            mMaxPersonHistory = maxPersonCounterHistorySize;
+        }
 
         public double computeGrandMetric() {
-            mGrandMetric = mMetricsData.mBaseMetricWeight * mMetricsData.mBaseMetric + mMetricsData.mFlowMetricWeight * mMetricsData.mBaseMetric;
+            mGrandMetric = mBaseMetricWeight * mBaseMetric + mFlowMetricWeight * mBaseMetric;
             return mGrandMetric;
         }
 
@@ -74,7 +98,8 @@ public class CameraInputManager {
             return ((sum - mMinMetricValue)/(mMaxMetricValue - mMinMetricValue)) * (mMaxCounterValue-1) + 1;
         }
     }
-    private MetricsData mMetricsData;
+    public MetricsData mMetricsData;
+    public int mChangeThreshold = 10;
 
     // Person Counter Data
     private int mMaxPersonHistory = 0;
@@ -84,25 +109,39 @@ public class CameraInputManager {
     private int personCounterHistorySum = 0;
     private int personCounterHistoryCount = 0;
 
+    private String mOutputDir = "Images";
     //endregion Variables **************************************************************************
 
     //region Camera Manager ************************************************************************
-    public void initializeCamera(Activity parentActivity){
+
+    public CameraInputManager(Activity parentActivity) {
         mParentActivity = parentActivity;
 
-        PreviewView previewView = parentActivity.findViewById(R.id.viewFinder);
-        ListenableFuture<ProcessCameraProvider> cameraProviderFuture = ProcessCameraProvider.getInstance(parentActivity);
-        cameraProviderFuture.addListener(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
-                    startCamera(cameraProvider, previewView);
-                } catch (ExecutionException | InterruptedException e) {
-                    e.printStackTrace();
-                }
+        requestPermissions();
+
+        mMetricsData = new MetricsData();
+    }
+
+    private void requestPermissions() {
+        if (mParentActivity.checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            mParentActivity.requestPermissions(new String[]{Manifest.permission.CAMERA}, CAMERA_REQUEST_CODE);
+        }
+        else {
+            initializeCamera();
+        }
+    }
+
+    public void initializeCamera(){
+        PreviewView previewView = mParentActivity.findViewById(R.id.viewFinder);
+        ListenableFuture<ProcessCameraProvider> cameraProviderFuture = ProcessCameraProvider.getInstance(mParentActivity);
+        cameraProviderFuture.addListener(() -> {
+            try {
+                ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
+                startCamera(cameraProvider, previewView);
+            } catch (ExecutionException | InterruptedException e) {
+                e.printStackTrace();
             }
-        }, ContextCompat.getMainExecutor(parentActivity));
+        }, ContextCompat.getMainExecutor(mParentActivity));
     }
 
     @SuppressLint("UnsafeOptInUsageError")
@@ -143,16 +182,15 @@ public class CameraInputManager {
                 .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
                 .build();
 
-        mMetricsData = new MetricsData();
         // Build the image analysis
         ImageAnalysis imageAnalyzer = new ImageAnalysis.Builder()
                 .setTargetResolution(targetSize)
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888)
                 .build();
-        imageAnalyzer.setAnalyzer(Executors.newSingleThreadExecutor(), mPageAnalyzer);
-        if (mMaxPersonHistory == 0)
-            resetPersonCounterData(10);
+        imageAnalyzer.setAnalyzer(Executors.newSingleThreadExecutor(), mFrameAnalyzer);
+
+        resetPersonCounterData((mMaxPersonHistory == 0) ? 10 : mMaxPersonHistory);
 
         // Bind camera to activity
         cameraProvider.unbindAll();
@@ -166,15 +204,16 @@ public class CameraInputManager {
     //endregion Camera Manager *********************************************************************
 
     //region Screen capture ************************************************************************
-    public void CaptureScreenshot(String fileName){
+    public void setOutputDir(String newDir){
+        mOutputDir = newDir;
+    }
 
-        File file = new File(mParentActivity.getExternalFilesDir(null),fileName);
-
+    public void captureScreenshot(String fileName){
+        File file = new File(mParentActivity.getExternalFilesDir(null), fileName);
         ImageCapture.OutputFileOptions outputOptions = new ImageCapture.OutputFileOptions.Builder(file).build();
 
         mImageCapture.takePicture(outputOptions, ContextCompat.getMainExecutor(mParentActivity), imListener);
     }
-
 
     private ImageCapture.OnImageSavedCallback imListener = new ImageCapture.OnImageSavedCallback() {
         @Override
@@ -214,28 +253,32 @@ public class CameraInputManager {
     }
 
     /** Listener containing callbacks for image file I/O events. */
-    public interface onPersonCounterChangeCallback {
+    public interface IPersonCounterChangeCallback {
         /** Called when an image has been successfully saved. */
         void OnPersonCounterChange(@NonNull int counter);
     }
-    private onPersonCounterChangeCallback mPersonCounterCallbackListener;
-    public void setPersonCounterChangeCallback(onPersonCounterChangeCallback listener)
+    private IPersonCounterChangeCallback mPersonCounterCallbackListener;
+    public void setPersonCounterChangeCallback(IPersonCounterChangeCallback listener)
     {
         mPersonCounterCallbackListener = listener;
     }
 
-    public interface OnMetricsUpdateCallback {
+    public interface IOnMetricsUpdateCallback {
         /** Called when an image has been successfully saved. */
         void onMetricsUpdated();
     }
-    private OnMetricsUpdateCallback mMetricsUpdateCallbackListener;
-    public void setMetricsUpdateCallback(OnMetricsUpdateCallback listener)
+    private IOnMetricsUpdateCallback mMetricsUpdateCallbackListener;
+    public void setMetricsUpdateCallback(IOnMetricsUpdateCallback listener)
     {
         mMetricsUpdateCallbackListener = listener;
     }
 
      public MetricsData getMetricsData(){
         return mMetricsData;
+    }
+
+    public void setChangeThreshold(int newChangeMetricThreshold) {
+        mChangeThreshold = newChangeMetricThreshold;
     }
 
     //region Frame Analyzer ************************************************************************
@@ -255,7 +298,7 @@ public class CameraInputManager {
         @Override
         public void analyze(ImageProxy image) {
             // Check if a valid image has been retrieved
-            if (image.getFormat() != ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888 || image.getPlanes()[0].getPixelStride() != 1) {
+            if (image.getFormat() != ImageFormat.YUV_420_888 || image.getPlanes()[0].getPixelStride() != 1) {
                 image.close();
                 return;
             }
@@ -266,6 +309,8 @@ public class CameraInputManager {
                 mBaseFrame = matImage.clone();
                 mLastFrame = mBaseFrame;
                 mResetBaseFrame = false;
+                CharSequence format = android.text.format.DateFormat.format("yyyy-MM-dd_hh.mm.ss", new Date());
+                captureScreenshot(mOutputDir + format);
             }
 
             // If base frame has not been set yet, return
@@ -288,10 +333,12 @@ public class CameraInputManager {
             // Get absolute frame difference compared to base frame
             Core.absdiff(currentFrame, mBaseFrame, diffImage);
             mMetricsData.mBaseMetric = Core.mean(diffImage).val[0];
-
+            // TODO: count number of pixels that changed over a threshold
             // Get absolute frame difference compared to last frame
             Core.absdiff(currentFrame, mLastFrame, diffImage);
             mMetricsData.mFlowMetric = Core.mean(diffImage).val[0];
+            Imgproc.threshold(diffImage, diffImage, mChangeThreshold, 255, Imgproc.THRESH_BINARY);
+            mMetricsData.mChangeMetric = Core.countNonZero(diffImage) / diffImage.size().area() * 100;
 
             mMetricsData.computeGrandMetric();
 
@@ -308,7 +355,8 @@ public class CameraInputManager {
 
             int averageCurrentPersonCounter = (int)((float) personCounterHistorySum / personCounterHistoryCount);
             if(lastPersonCounter != averageCurrentPersonCounter) {
-                mPersonCounterCallbackListener.OnPersonCounterChange(averageCurrentPersonCounter);
+                if (mPersonCounterCallbackListener != null)
+                    mPersonCounterCallbackListener.OnPersonCounterChange(averageCurrentPersonCounter);
                 lastPersonCounter = averageCurrentPersonCounter;
             }
             mMetricsUpdateCallbackListener.onMetricsUpdated();

@@ -112,7 +112,7 @@ public class ImageUtilities {
             }
 
             // File name
-            String path = dirpath + "/ReinheritImages/" + filename + "-" + format + ".jpeg";
+            String path = dirpath + "/Reinherit/Images/" + filename + "-" + format + ".jpeg";
             view.setDrawingCacheEnabled(true);
             Bitmap bitmap = Bitmap.createBitmap(view.getDrawingCache());
             //view.setDrawingCacheEnabled(false);

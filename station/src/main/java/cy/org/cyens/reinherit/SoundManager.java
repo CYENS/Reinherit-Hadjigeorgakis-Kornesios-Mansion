@@ -10,11 +10,10 @@ import java.util.Hashtable;
 import java.util.Locale;
 
 public class SoundManager {
-    private int mMaxSounds;
-    private int mLastSoundIndex;
+    private final int mMaxSounds;
     private String mSoundFilesNamePrefix;
-    private String mSoundFileExtension;
-    private Activity mParentActivity;
+    private final String mSoundFileExtension;
+    private final Activity mParentActivity;
 
     //This is a dictionary to save every mac address as a key and the device name as a value
     public Hashtable<Integer, MusicThread> Threads = new Hashtable<Integer, MusicThread>();
@@ -55,7 +54,6 @@ public class SoundManager {
                 Threads.put(i,music_thread);
             }
         }
-        mLastSoundIndex = index;
     }
 
     public void stopSound(int index){

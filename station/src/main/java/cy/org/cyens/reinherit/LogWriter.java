@@ -47,7 +47,7 @@ public class LogWriter {
 */
     @NonNull
     private File createFile() {
-        File directory = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/ReinheritLogs/");
+        File directory = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/Reinherit/Logs/");
 
         if (!directory.exists() && !directory.mkdirs()) {
             Log.e(TAG, "Error creating directory " + directory);
