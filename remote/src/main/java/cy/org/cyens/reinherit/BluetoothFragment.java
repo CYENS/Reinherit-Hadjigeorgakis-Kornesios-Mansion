@@ -256,7 +256,6 @@ public class BluetoothFragment extends Fragment {
         Button btn = (Button) view.findViewById(R.id.MusicButton);
         Button btn1 = (Button) view.findViewById(R.id.startButton);
         Button btn2 = (Button) view.findViewById(R.id.stopButton);
-        Button btn3 = (Button) view.findViewById(R.id.resetCameraPoseButton);
         Button btn4 = (Button) view.findViewById(R.id.getStatusButton);
         Button btn5 = (Button) view.findViewById(R.id.cameraButton);
         Button btn6 = (Button) view.findViewById(R.id.raiseVolume);
@@ -356,20 +355,6 @@ public class BluetoothFragment extends Fragment {
             }
         });
 
-        btn3.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                try {
-                    Toast.makeText(getActivity(), "Resetting camera position...", Toast.LENGTH_LONG).show();
-                    sendMessage(new JSONObject().put("id", Constants.COMMANDS.RESET_CAMERA_POSE).toString());
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-
-            }
-        });
-
         btn4.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -434,7 +419,17 @@ public class BluetoothFragment extends Fragment {
             }
         });
 
-
+        Button btnResetLog = (Button) view.findViewById(R.id.buttonResetLog);
+        btnResetLog.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try {
+                    sendMessage(new JSONObject().put("id", Constants.COMMANDS.RESET_LOG).toString());
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
 
         return view;
         //end of new code more

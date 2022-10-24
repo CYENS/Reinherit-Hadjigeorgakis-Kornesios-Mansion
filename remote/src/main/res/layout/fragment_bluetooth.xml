@@ -116,11 +116,11 @@
             android:textSize="10sp" />
 
         <Button
-            android:id="@+id/resetCameraPoseButton"
+            android:id="@+id/buttonResetLog"
             android:layout_width="100sp"
             android:layout_height="wrap_content"
             android:padding="10sp"
-            android:text="@string/reset_camera_pose"
+            android:text="@string/button_reset_log"
             android:textSize="10sp" />
     </LinearLayout>
 

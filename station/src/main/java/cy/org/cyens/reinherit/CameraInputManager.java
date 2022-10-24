@@ -79,7 +79,7 @@ public class CameraInputManager {
         }
 
         public double computeGrandMetric() {
-            mGrandMetric = mBaseMetricWeight * mBaseMetric + mFlowMetricWeight * mBaseMetric;
+            mGrandMetric = mBaseMetricWeight * mBaseMetric + mFlowMetricWeight * mChangeMetric;
             return mGrandMetric;
         }
 
@@ -110,12 +110,15 @@ public class CameraInputManager {
     private int personCounterHistoryCount = 0;
 
     private String mOutputDir = "Images";
+    private String mCaptureDebugImages = "";
+    private PreviewView mPreviewView;
     //endregion Variables **************************************************************************
 
     //region Camera Manager ************************************************************************
 
     public CameraInputManager(Activity parentActivity) {
         mParentActivity = parentActivity;
+        mPreviewView = mParentActivity.findViewById(R.id.viewFinder);
 
         requestPermissions();
 
@@ -132,12 +135,11 @@ public class CameraInputManager {
     }
 
     public void initializeCamera(){
-        PreviewView previewView = mParentActivity.findViewById(R.id.viewFinder);
         ListenableFuture<ProcessCameraProvider> cameraProviderFuture = ProcessCameraProvider.getInstance(mParentActivity);
         cameraProviderFuture.addListener(() -> {
             try {
                 ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
-                startCamera(cameraProvider, previewView);
+                startCamera(cameraProvider);
             } catch (ExecutionException | InterruptedException e) {
                 e.printStackTrace();
             }
@@ -145,7 +147,7 @@ public class CameraInputManager {
     }
 
     @SuppressLint("UnsafeOptInUsageError")
-    private void startCamera(@NonNull ProcessCameraProvider cameraProvider, PreviewView previewView) {
+    private void startCamera(@NonNull ProcessCameraProvider cameraProvider) {
         cameraProvider.unbindAll();
 
         // Select camera
@@ -174,7 +176,7 @@ public class CameraInputManager {
         // Build the previewer
         Preview preview = new Preview.Builder()
                 .build();
-        preview.setSurfaceProvider(previewView.getSurfaceProvider());
+        preview.setSurfaceProvider(mPreviewView.getSurfaceProvider());
 
         // Build the image capture
         mImageCapture = new ImageCapture.Builder()
@@ -213,6 +215,10 @@ public class CameraInputManager {
         ImageCapture.OutputFileOptions outputOptions = new ImageCapture.OutputFileOptions.Builder(file).build();
 
         mImageCapture.takePicture(outputOptions, ContextCompat.getMainExecutor(mParentActivity), imListener);
+    }
+
+    public void captureDebugImages(String fileName){
+        mCaptureDebugImages = fileName;
     }
 
     private ImageCapture.OnImageSavedCallback imListener = new ImageCapture.OnImageSavedCallback() {
@@ -263,14 +269,24 @@ public class CameraInputManager {
         mPersonCounterCallbackListener = listener;
     }
 
-    public interface IOnMetricsUpdateCallback {
+    public interface IVoidCallback {
         /** Called when an image has been successfully saved. */
-        void onMetricsUpdated();
+        void invoke();
     }
-    private IOnMetricsUpdateCallback mMetricsUpdateCallbackListener;
-    public void setMetricsUpdateCallback(IOnMetricsUpdateCallback listener)
+    private IVoidCallback mOnMetricsUpdateCallback;
+    public void setMetricsUpdateCallback(IVoidCallback listener)
     {
-        mMetricsUpdateCallbackListener = listener;
+        mOnMetricsUpdateCallback = listener;
+    }
+    private IVoidCallback nOnBasePictureResetCallback;
+    public void setBasePictureResetCallback(IVoidCallback listener)
+    {
+        nOnBasePictureResetCallback = listener;
+    }
+    private IVoidCallback mOnTriggerScreenshotCaptureCallback;
+    public void setTriggerScreenshotCaptureCallback(IVoidCallback listener)
+    {
+        mOnTriggerScreenshotCaptureCallback = listener;
     }
 
      public MetricsData getMetricsData(){
@@ -295,6 +311,7 @@ public class CameraInputManager {
             return new Mat(height, width, CvType.CV_8UC1, yBuffer);
         }
 
+        @SuppressLint("UnsafeOptInUsageError")
         @Override
         public void analyze(ImageProxy image) {
             // Check if a valid image has been retrieved
@@ -311,6 +328,10 @@ public class CameraInputManager {
                 mResetBaseFrame = false;
                 CharSequence format = android.text.format.DateFormat.format("yyyy-MM-dd_hh.mm.ss", new Date());
                 captureScreenshot(mOutputDir + format);
+
+                if (nOnBasePictureResetCallback != null){
+                    nOnBasePictureResetCallback.invoke();
+                }
             }
 
             // If base frame has not been set yet, return
@@ -318,6 +339,15 @@ public class CameraInputManager {
                 image.close();
                 return;
             }
+
+            if (mCaptureDebugImages.length() > 0){
+                try {
+                    ImageUtilities.saveBitmap(ImageUtilities.toBitmap(image.getImage()), "db-img2bmp");
+                }catch(Exception e){}
+                try {
+                    ImageUtilities.saveBitmap(ImageUtilities.convertImageProxyToBitmap(image.getImage()), "db-");
+                }catch(Exception e){}
+                }
 
             // Process frame data and extract metrics
             ProcessFrameData(matImage);
@@ -337,8 +367,23 @@ public class CameraInputManager {
             // Get absolute frame difference compared to last frame
             Core.absdiff(currentFrame, mLastFrame, diffImage);
             mMetricsData.mFlowMetric = Core.mean(diffImage).val[0];
+
+            if (mCaptureDebugImages.length() > 0){
+                ImageUtilities.saveGrayMatToBitmap(diffImage, "db-df-");
+            }
+
             Imgproc.threshold(diffImage, diffImage, mChangeThreshold, 255, Imgproc.THRESH_BINARY);
-            mMetricsData.mChangeMetric = Core.countNonZero(diffImage) / diffImage.size().area() * 100;
+            mMetricsData.mChangeMetric = Math.max(0.0, (Core.countNonZero(diffImage) / diffImage.size().area() * 100) * 2 - 5);
+
+            if (mCaptureDebugImages.length() > 0){
+
+                ImageUtilities.saveGrayMatToBitmap(currentFrame, "db-cf-");
+                ImageUtilities.saveGrayMatToBitmap(diffImage, "db-thr-");
+                mCaptureDebugImages = "";
+                if (mOnTriggerScreenshotCaptureCallback != null) {
+                    mOnTriggerScreenshotCaptureCallback.invoke();
+                }
+            }
 
             mMetricsData.computeGrandMetric();
 
@@ -359,7 +404,7 @@ public class CameraInputManager {
                     mPersonCounterCallbackListener.OnPersonCounterChange(averageCurrentPersonCounter);
                 lastPersonCounter = averageCurrentPersonCounter;
             }
-            mMetricsUpdateCallbackListener.onMetricsUpdated();
+            mOnMetricsUpdateCallback.invoke();
         }
     }
     //endregion Frame Analyzer *********************************************************************
