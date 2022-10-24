@@ -38,13 +38,15 @@ public class SoundManager {
         initializeSounds(folder, soundFilePrefix);
 
         startBackgroundAudio(includeBackgroundAudio);
-
     }
 
     private void startBackgroundAudio(boolean includeBackgroundAudio) {
         if (includeBackgroundAudio) {
-            backgroundAudioMediaThread = new MusicThread(0, mSoundFilesNamePrefix, mSoundFileExtension, mParentActivity, mLoopSounds);
+            if (backgroundAudioMediaThread == null)
+                backgroundAudioMediaThread = new MusicThread(0, mSoundFilesNamePrefix, mSoundFileExtension, mParentActivity, mLoopSounds);
+
             backgroundAudioMediaThread.start();
+            isBackgroundAudioPlaying = true;
         }
         else
             backgroundAudioMediaThread = null;
@@ -70,7 +72,6 @@ public class SoundManager {
 
     public void playSound(int index){
         if (backgroundAudioMediaThread != null && !isBackgroundAudioPlaying) {
-            isBackgroundAudioPlaying = true;
             startBackgroundAudio(true);
         }
 

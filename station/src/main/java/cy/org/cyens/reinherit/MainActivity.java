@@ -224,7 +224,7 @@ public class MainActivity extends AppCompatActivity {
         mCameraManager.setTriggerScreenshotCaptureCallback(nOnTriggerScreenshotCaptureCallback);
         mCameraManager.setChangeThreshold(mChangeMetricThreshold);
 
-        mSoundManager = new SoundManager(MAX_AUDIO_FILES, "/Reinherit/", "sound", "wav", this, true, true);
+        mSoundManager = new SoundManager(MAX_AUDIO_FILES, "/Reinherit/", "sound", "aif", this, true, true);
 
         // Required permissions for external storage management
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) { // for android sdk >=30
