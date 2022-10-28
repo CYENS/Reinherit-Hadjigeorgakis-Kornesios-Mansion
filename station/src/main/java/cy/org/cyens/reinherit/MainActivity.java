@@ -43,6 +43,8 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
 import java.util.Scanner;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import cy.org.cyens.common.BluetoothService;
 import cy.org.cyens.common.Constants;
@@ -72,6 +74,8 @@ public class MainActivity extends AppCompatActivity {
 
     private boolean soundStopped = false;
     private boolean cameraState = true;
+
+    Timer mStopTrackingTimer = null;
 
     private TextView mTrackerText;
     private TextView mConnectionStatus;
@@ -233,6 +237,7 @@ public class MainActivity extends AppCompatActivity {
         String deviceID = mDeviceNameText.getText().toString();
         try {
             deviceID = BluetoothAdapter.getDefaultAdapter().getName();
+
             ((TextView) findViewById(R.id.textViewDeviceID)).setText(deviceID);
         }catch(Exception e) {
             Log.w(TAG, e.getMessage());
@@ -241,6 +246,39 @@ public class MainActivity extends AppCompatActivity {
         mLogDetectWriter = new LogWriter(getApplicationContext(), deviceID + "_log.csv");
         CameraInputManager.MetricsData md = mCameraManager.getMetricsData();
         mLogDetectWriter.appendData(String.format(Locale.US, "%s,%d,%f,%f,%f,%f,%f,%f,%d\n", mDateFormatter.format(Calendar.getInstance().getTime()), 1, -1.0, -1.0, -1.0,  md.mBaseMetricWeight, md.mMinMetricValue, md.mMaxMetricValue, NumberOfMusicians));
+    }
+
+    public void startTracking(){
+        setStatus(mConnectionStatus, "Starting tracking");
+        mSoundManager.stopSound(0);
+        mCameraManager.startTracking();
+    }
+
+    public void stopTracking(){
+        setStatus(mConnectionStatus, "Not tracking");
+        mSoundManager.stopSound(0);
+        mCameraManager.stopTracking();
+    }
+
+    public void stopTracking(int hour, int seconds){
+        Calendar targetTime = Calendar.getInstance();
+        targetTime.set(Calendar.HOUR, hour);
+        targetTime.set(Calendar.MINUTE, seconds);
+
+        mStopTrackingTimer = new Timer();
+        mStopTrackingTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                mStopTrackingTimer = null;
+                stopTracking();
+            }
+        }, targetTime.getTime());
+    }
+
+    public void cancelStopTrackingTimer(){
+        if (mStopTrackingTimer == null) return;
+        mStopTrackingTimer.cancel();
+        mStopTrackingTimer = null;
     }
 
     @Override
@@ -355,7 +393,7 @@ public class MainActivity extends AppCompatActivity {
                                 }
                             }
                             break;
-                        case  CAMERA_DISPLAY:
+                        case CAMERA_DISPLAY:
                             togglePreviewVisibility();
                             break;
                         case RAISE_VOLUME:

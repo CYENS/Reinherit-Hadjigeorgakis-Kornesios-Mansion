@@ -14,10 +14,8 @@ dependencyResolutionManagement {
 }
 rootProject.name = "Reinherit"
 include ':station'
-include ':opencv-android-sdk-with-contrib'
 include ':remote'
 include ':common-lib'
 
 
-include ':openCvSdk460'
 include ':openCvSdk460'

@@ -54,6 +54,8 @@ public class CameraInputManager {
     FrameAnalyzer mFrameAnalyzer = new FrameAnalyzer();
     boolean mResetBaseFrame = true;
 
+    private boolean mUpdateTracking = true;
+
     // Metric Data
     public class MetricsData {
         public int mMaxCounterValue = 5;
@@ -201,6 +203,13 @@ public class CameraInputManager {
         resetBaseFrame();
     }
 
+    public void startTracking() {
+        mUpdateTracking = true;
+    }
+
+    public void stopTracking() {
+        mUpdateTracking = false;
+    }
     //endregion Camera Manager *********************************************************************
 
     //region Screen capture ************************************************************************
@@ -298,7 +307,7 @@ public class CameraInputManager {
         @Override
         public void analyze(ImageProxy image) {
             // Check if a valid image has been retrieved
-            if (image.getFormat() != ImageFormat.YUV_420_888 || image.getPlanes()[0].getPixelStride() != 1) {
+            if (!mUpdateTracking || image.getFormat() != ImageFormat.YUV_420_888 || image.getPlanes()[0].getPixelStride() != 1) {
                 image.close();
                 return;
             }
