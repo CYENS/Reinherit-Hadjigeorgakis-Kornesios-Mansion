@@ -7,13 +7,12 @@
         <option name="testRunner" value="GRADLE" />
         <option name="distributionType" value="DEFAULT_WRAPPED" />
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
-        <option name="gradleJvm" value="Embedded JDK" />
+        <option name="gradleJvm" value="JDK" />
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/common-lib" />
             <option value="$PROJECT_DIR$/openCvSdk460" />
-            <option value="$PROJECT_DIR$/opencv-android-sdk-with-contrib" />
             <option value="$PROJECT_DIR$/remote" />
             <option value="$PROJECT_DIR$/station" />
           </set>

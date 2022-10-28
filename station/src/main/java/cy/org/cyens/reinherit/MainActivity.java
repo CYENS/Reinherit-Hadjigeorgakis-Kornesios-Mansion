@@ -118,16 +118,44 @@ public class MainActivity extends AppCompatActivity {
     }
     private final PeopleCounterChangeCallback mPeopleCounterChangeCallback = new PeopleCounterChangeCallback();
 
-    public class MetricsUpdateCallback implements CameraInputManager.IOnMetricsUpdateCallback
+    //region Callback Handlers
+    public class MetricsUpdateCallback implements CameraInputManager.IVoidCallback
     {
+        private int logsCaptured = 0;
+
         @Override
-        public void onMetricsUpdated() {
+        public void invoke() {
             CameraInputManager.MetricsData md = mCameraManager.getMetricsData();
             setStatus(mTrackerText, String.format(Locale.US, "Metric: %d\nAVG: %.1f ( B: %.1f\t, F: %.1f\t, C: %.1f)\nW: %.2f\t (MN: %.0f\tMX: %.0f)", md.getCounterMetric(), md.mGrandMetric, md.mBaseMetric, md.mFlowMetric, md.mChangeMetric,  md.mBaseMetricWeight, md.mMinMetricValue, md.mMaxMetricValue, NumberOfMusicians));
-            mLogDetectWriter.appendData(String.format(Locale.US, "%s,%d,%f,%f,%f,%f,%f,%f,%d)", mDateFormatter.format(Calendar.getInstance().getTime()), md.getCounterMetric(), md.mGrandMetric, md.mBaseMetric, md.mFlowMetric,  md.mBaseMetricWeight, md.mMinMetricValue, md.mMaxMetricValue, NumberOfMusicians));
+            mLogDetectWriter.appendData(String.format(Locale.US, "%s,%d,%f,%f,%f,%f,%f,%f,%f,%d\n", mDateFormatter.format(Calendar.getInstance().getTime()), md.getCounterMetric(), md.mGrandMetric, md.mBaseMetric, md.mFlowMetric, md.mChangeMetric, md.mBaseMetricWeight, md.mMinMetricValue, md.mMaxMetricValue, NumberOfMusicians));
+            logsCaptured++;
+            if (logsCaptured == 100)
+            {
+                mLogDetectWriter.flush();
+                logsCaptured = 0;
+            }
         }
     }
     private final MetricsUpdateCallback mMetricsUpdatedCallback = new MetricsUpdateCallback();
+
+    public class BasePictureResetCallback implements CameraInputManager.IVoidCallback
+    {
+        @Override
+        public void invoke() {
+            CameraInputManager.MetricsData md2 = mCameraManager.getMetricsData();
+            mLogDetectWriter.appendData(String.format(Locale.US, "%s,%d,%f,%f,%f,%f,%f,%f,%f,%d\n", mDateFormatter.format(Calendar.getInstance().getTime()), -1, -1.0, -1.0, -1.0, -1.0,  md2.mBaseMetricWeight, md2.mMinMetricValue, md2.mMaxMetricValue, NumberOfMusicians));
+        }
+    }
+    private final BasePictureResetCallback mBasePictureResetCallback = new BasePictureResetCallback();
+
+    public class OnTriggerScreenshotCaptureCallback implements CameraInputManager.IVoidCallback
+    {
+        @Override
+        public void invoke() {
+        }
+    }
+    private final OnTriggerScreenshotCaptureCallback nOnTriggerScreenshotCaptureCallback = new OnTriggerScreenshotCaptureCallback();
+    //endregion Callback Handlers
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -194,11 +222,13 @@ public class MainActivity extends AppCompatActivity {
         mCameraManager.setOutputDir(imagesDir.getAbsolutePath() + "/");
         readWeight();
         mCameraManager.getMetricsData().setMaxCounterValue(MAX_PERSON_COUNTER_HISTORY_SIZE);
-        mCameraManager.setMetricsUpdateCallback(mMetricsUpdatedCallback);
         mCameraManager.setPersonCounterChangeCallback(mPeopleCounterChangeCallback);
+        mCameraManager.setMetricsUpdateCallback(mMetricsUpdatedCallback);
+        mCameraManager.setBasePictureResetCallback(mBasePictureResetCallback);
+        mCameraManager.setTriggerScreenshotCaptureCallback(nOnTriggerScreenshotCaptureCallback);
         mCameraManager.setChangeThreshold(mChangeMetricThreshold);
 
-        mSoundManager = new SoundManager(MAX_AUDIO_FILES, "/Reinherit/", "sound", "wav", this);
+        mSoundManager = new SoundManager(MAX_AUDIO_FILES, "/Reinherit/", "sound", "aif", this, true, true);
 
         // Required permissions for external storage management
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) { // for android sdk >=30
@@ -243,9 +273,7 @@ public class MainActivity extends AppCompatActivity {
             Log.w(TAG, e.getMessage());
         }
 
-        mLogDetectWriter = new LogWriter(getApplicationContext(), deviceID + "_log.csv");
-        CameraInputManager.MetricsData md = mCameraManager.getMetricsData();
-        mLogDetectWriter.appendData(String.format(Locale.US, "%s,%d,%f,%f,%f,%f,%f,%f,%d\n", mDateFormatter.format(Calendar.getInstance().getTime()), 1, -1.0, -1.0, -1.0,  md.mBaseMetricWeight, md.mMinMetricValue, md.mMaxMetricValue, NumberOfMusicians));
+        createNewLogWriter();
     }
 
     public void startTracking(){
@@ -407,7 +435,7 @@ public class MainActivity extends AppCompatActivity {
                         case SET_MUSICIANS:
                             NumberOfMusicians = (int)valueInt;
                             CameraInputManager.MetricsData md = mCameraManager.getMetricsData();
-                            mLogDetectWriter.appendData(String.format(Locale.US, "%s,%d,%f,%f,%f,%f,%f,%f,%d\n", mDateFormatter.format(Calendar.getInstance().getTime()), -1, -1.0, -1.0, -1.0,  md.mBaseMetricWeight, md.mMinMetricValue, md.mMaxMetricValue, NumberOfMusicians));
+                            mLogDetectWriter.appendData(String.format(Locale.US, "%s,%d,%f,%f,%f,%f,%f,%f,%f,%d\n", mDateFormatter.format(Calendar.getInstance().getTime()), -1, -1.0, -1.0, -1.0, -1.0,  md.mBaseMetricWeight, md.mMinMetricValue, md.mMaxMetricValue, NumberOfMusicians));
                             break;
                         case SET_MAX_VALUE:
                             mCameraManager.getMetricsData().setMaxValue((int) valueInt);
@@ -438,9 +466,12 @@ public class MainActivity extends AppCompatActivity {
                             break;
                         case SET_BASE_IMAGE:
                             mCameraManager.resetBaseFrame();
-                            ImageUtilities.takeScreenshot(mPreviewView, "");
+                            ImageUtilities.takeScreenshot(mPreviewView, "bi");
                             CameraInputManager.MetricsData md2 = mCameraManager.getMetricsData();
-                            mLogDetectWriter.appendData(String.format(Locale.US, "%s,%d,%f,%f,%f,%f,%f,%f,%d\n", mDateFormatter.format(Calendar.getInstance().getTime()), -1, -1.0, -1.0, -1.0,  md2.mBaseMetricWeight, md2.mMinMetricValue, md2.mMaxMetricValue, NumberOfMusicians));
+                            mLogDetectWriter.appendData(String.format(Locale.US, "%s,%d,%f,%f,%f,%f,%f,%f,%f,%d\n", mDateFormatter.format(Calendar.getInstance().getTime()), -1, -1.0, -1.0, -1.0, -1.0,  md2.mBaseMetricWeight, md2.mMinMetricValue, md2.mMaxMetricValue, NumberOfMusicians));
+                            break;
+                        case RESET_LOG:
+                            createNewLogWriter();
                             break;
                     }
 
@@ -489,8 +520,12 @@ public class MainActivity extends AppCompatActivity {
         });
 
         //new code
-        Button btn3 = findViewById(R.id.DefaultSoundOnOff);
+        Button btn3 = findViewById(R.id.saveImages);
         btn3.setOnClickListener(v -> {
+            ImageUtilities.saveBitmap(mPreviewView.getBitmap(), "db-pv");
+
+            mCameraManager.captureDebugImages("db");
+            /*
             if (isPlaying) {
 
                 mediaPlayer.stop();
@@ -508,12 +543,12 @@ public class MainActivity extends AppCompatActivity {
                     isPlaying = true;
                 }
             }
+            */
         });
 
         Button btn4 = findViewById(R.id.setBaseImage);
         btn4.setOnClickListener(v -> {
             mCameraManager.resetBaseFrame();
-            ImageUtilities.takeScreenshot(mPreviewView, "");
         });
     }
 
@@ -565,6 +600,18 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
+    private void createNewLogWriter() {
+        if (mLogDetectWriter != null){
+            mLogDetectWriter.close();
+        }
+
+        String deviceID = mDeviceNameText.getText().toString();
+        mLogDetectWriter = new LogWriter(getApplicationContext(), "log_" + deviceID + "_" + mDateFormatter.format(Calendar.getInstance().getTime()) + ".csv");
+        mLogDetectWriter.appendData("timestamp,people,total,base,flow,change,base-weight,min,max,musicians\n");
+        CameraInputManager.MetricsData md = mCameraManager.getMetricsData();
+        mLogDetectWriter.appendData(String.format(Locale.US, "%s,%d,%f,%f,%f,%f,%f,%f,%f,%d\n", mDateFormatter.format(Calendar.getInstance().getTime()), 1, -1.0, -1.0, -1.0, -1.0,  md.mBaseMetricWeight, md.mMinMetricValue, md.mMaxMetricValue, NumberOfMusicians));
+    }
+
     // region IO
     private void saveMetricsData(){
         String filePath = Environment.getExternalStorageDirectory().getPath() + "/Reinherit/Logs/Weight.txt";
@@ -583,7 +630,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             FileWriter myWriter = new FileWriter(filePath);
             CameraInputManager.MetricsData md = mCameraManager.getMetricsData();
-            myWriter.append(String.format(Locale.US, "%f\n%f\n%f\n%s", md.mBaseMetricWeight, md.mMinMetricValue, md.mMaxMetricValue, mDeviceNameText.getText().toString()));
+            myWriter.append(String.format(Locale.US, "%f\n%f\n%f\n%s\n", md.mBaseMetricWeight, md.mMinMetricValue, md.mMaxMetricValue, mDeviceNameText.getText().toString()));
             myWriter.close();
         } catch (IOException e) {
             System.out.println("An error occurred.");

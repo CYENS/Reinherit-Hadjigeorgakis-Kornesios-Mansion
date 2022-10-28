@@ -28,7 +28,8 @@ public interface Constants {
         SET_MIN_VALUE,
         SET_WEIGHT,
         SET_BASE_IMAGE,
-        IMAGE;
+        IMAGE,
+        RESET_LOG;
 
         public static COMMANDS fromString(String x) {
             switch(x) {
@@ -62,6 +63,8 @@ public interface Constants {
                     return SET_BASE_IMAGE;
                 case "IMAGE":
                     return IMAGE;
+                case "RESET_LOG":
+                    return RESET_LOG;
             }
             return null;
         }

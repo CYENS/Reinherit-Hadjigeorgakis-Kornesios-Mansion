@@ -38,6 +38,21 @@ import java.util.Date;
 
 public class ImageUtilities {
 
+    public static void saveGrayMatToBitmap(Mat mat, String label){
+        Bitmap resultBitmap = null;
+        try {
+            Mat temp = new Mat(mat.cols(), mat.rows(), CvType.CV_8UC1);
+            mat.copyTo(temp);
+            Imgproc.cvtColor(temp, temp, Imgproc.COLOR_GRAY2RGBA);
+            resultBitmap = Bitmap.createBitmap(temp.cols(),temp.rows(), Bitmap.Config.ARGB_8888);
+            Utils.matToBitmap(temp, resultBitmap, true);
+            saveBitmap(resultBitmap, label);
+        }
+        catch (CvException e){
+            Log.d("Exception",e.getMessage());
+        }
+    }
+
     public static void saveMatToBitmap(Mat mat, String label){
         Bitmap resultBitmap = null;
         try {
@@ -62,7 +77,7 @@ public class ImageUtilities {
         // Here we are initialising the format of our image name
         CharSequence format = android.text.format.DateFormat.format("yyyy-MM-dd_HH-mm-ss", date);
         try {
-            try (FileOutputStream out = new FileOutputStream(Environment.getExternalStorageDirectory() +"/ReinheritImages/" + label + format +".png")) {
+            try (FileOutputStream out = new FileOutputStream(Environment.getExternalStorageDirectory() +"/Reinherit/Images/" + label + format +".png")) {
                 b.compress(Bitmap.CompressFormat.PNG, 100, out);
             }
         } catch (Exception e) {
