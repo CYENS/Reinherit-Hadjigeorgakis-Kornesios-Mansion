@@ -20,15 +20,12 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothSocket;
-import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.provider.Settings;
 import android.util.Log;
@@ -44,30 +41,24 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.dynamicanimation.animation.SpringAnimation;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.viewpager.widget.ViewPager;
 
 import com.google.android.material.slider.Slider;
+import com.google.android.material.tabs.TabLayout;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.w3c.dom.Text;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.Hashtable;
-import java.util.Locale;
 import java.util.UUID;
 
 import cy.org.cyens.common.BluetoothService;
@@ -125,6 +116,10 @@ public class BluetoothFragment extends Fragment {
 
     //BT STUFF
     private static final UUID MY_UUID = UUID.fromString("fa87c0d0-afac-11de-8a39-0800200c9a66");
+    TabLayout tabLayout;
+    ViewPager viewPager;
+
+    private SharedViewModel mViewModel;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -133,7 +128,7 @@ public class BluetoothFragment extends Fragment {
         String namedev = Settings.Global.DEVICE_NAME;
         CreateFile();
         try {
-            ReadCSVFile(pathToCSV);
+            readDevicesFromFile(pathToCSV);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -186,41 +181,6 @@ public class BluetoothFragment extends Fragment {
         } else if (mService == null) {
             setup();
         }
-
-        /*
-        activity.findViewById(R.id.startButton).setOnClickListener(new View.OnClickListener(){
-            public void onClick(View v) {
-                System.exit(0);
-            }
-        });
-        */
-
-        // TODO For each button write the click listeners to send commands to the connected device(Edit: you can't do that OnCreate. They are initiated in the OnCreatedView)
-        /*Setup buttons
-
-        activity.findViewById(R.id.startButton).setOnClickListener(v -> {
-            System.out.println("-----------------test test test--------------");
-            try {
-                sendMessage(new JSONObject().put("id", Constants.COMMANDS.START).toString());
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        });
-
-        activity.findViewById(R.id.stopButton).setOnClickListener(v -> {
-            try {
-                sendMessage(new JSONObject().put("id", Constants.COMMANDS.STOP).toString());
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        });
-
-        // Setup frequency slider
-        //Slider slider = activity.findViewById(R.id.sliderFreq);
-        //slider.addOnChangeListener((slider1, value, fromUser) -> PdBase.sendFloat("freq", value));
-        //...
-        */
-
     }
 
 
@@ -252,188 +212,25 @@ public class BluetoothFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_bluetooth, container, false);
-//new code more
-        Button btn = (Button) view.findViewById(R.id.MusicButton);
-        Button btn1 = (Button) view.findViewById(R.id.startButton);
-        Button btn2 = (Button) view.findViewById(R.id.stopButton);
-        Button btn3 = (Button) view.findViewById(R.id.resetCameraPoseButton);
-        Button btn4 = (Button) view.findViewById(R.id.getStatusButton);
-        Button btn5 = (Button) view.findViewById(R.id.cameraButton);
-        Button btn6 = (Button) view.findViewById(R.id.raiseVolume);
-        Button btn7 = (Button) view.findViewById(R.id.lowerVolume);
-        Button btn8 = (Button) view.findViewById(R.id.SetBaseButton);
 
-
-        Slider slider = (Slider) view.findViewById(R.id.sliderFreq);
-        slider.addOnChangeListener((slider1, value, fromUser) -> {
-            try {
-                sendMessage(new JSONObject().put("id", Constants.COMMANDS.SET_FREQ).put("val",value).toString());
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        });                   //PdBase.sendFloat("freq", value));
-
-        Slider slider2 = (Slider) view.findViewById(R.id.sliderMusicians);
-        slider2.addOnChangeListener((slider1, value, fromUser) -> {
-            try {
-                sendMessage(new JSONObject().put("id", Constants.COMMANDS.SET_MUSICIANS).put("val",value).toString());
-                TextView musiciansText = (TextView) view.findViewById(R.id.sliderMusiciansNumber);
-                int convertedValue = (int)value;
-                String sliderValue = Integer.toString(convertedValue);
-                musiciansText.setText(sliderValue);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        });
-
-        Slider slider3 = (Slider) view.findViewById(R.id.sliderMaxValue);
-        slider3.addOnChangeListener((slider1, value, fromUser) -> {
-            try {
-                sendMessage(new JSONObject().put("id", Constants.COMMANDS.SET_MAX_VALUE).put("val",value).toString());
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        });
-
-        Slider slider4 = (Slider) view.findViewById(R.id.sliderMinValue);
-        slider4.addOnChangeListener((slider1, value, fromUser) -> {
-            try {
-                sendMessage(new JSONObject().put("id", Constants.COMMANDS.SET_MIN_VALUE).put("val",value).toString());
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        });
-
-        Slider slider5 = (Slider) view.findViewById(R.id.sliderWeight);
-        slider5.addOnChangeListener((slider1, value, fromUser) -> {
-            try {
-                sendMessage(new JSONObject().put("id", Constants.COMMANDS.SET_WEIGHT).put("val",value).toString());
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        });
-
-
-
-        btn.setOnClickListener(new View.OnClickListener() {
+        tabLayout = view.findViewById(R.id.modeTabLayout);
+        viewPager = view.findViewById(R.id.mode_view_pager);
+        final ModesAdapter adapter = new ModesAdapter(getContext(), getChildFragmentManager(), tabLayout.getTabCount());
+        viewPager.setAdapter(adapter);
+        //tabLayout.setupWithViewPager(viewPager);
+        viewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
+        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
-            public void onClick(View v) {
-// display a message by using a Toast
-                Toast.makeText(getActivity(), "Music...", Toast.LENGTH_LONG).show();
-                try {
-                    sendMessage(new JSONObject().put("id", Constants.COMMANDS.PLAY_SOUND).toString());
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
+            public void onTabSelected(TabLayout.Tab tab) {
+                viewPager.setCurrentItem(tab.getPosition());
             }
-        });
-
-        btn1.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-
-                try {
-                    Toast.makeText(getActivity(), "Starting...", Toast.LENGTH_LONG).show();
-                    sendMessage(new JSONObject().put("id", Constants.COMMANDS.START).put("val","0").toString());
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-
+            public void onTabUnselected(TabLayout.Tab tab) {
             }
-        });
-
-        btn2.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-
-                try {
-                    Toast.makeText(getActivity(), "Stopping...", Toast.LENGTH_LONG).show();
-                    sendMessage(new JSONObject().put("id", Constants.COMMANDS.STOP).toString());
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-
+            public void onTabReselected(TabLayout.Tab tab) {
             }
         });
-
-        btn3.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                try {
-                    Toast.makeText(getActivity(), "Resetting camera position...", Toast.LENGTH_LONG).show();
-                    sendMessage(new JSONObject().put("id", Constants.COMMANDS.RESET_CAMERA_POSE).toString());
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-
-            }
-        });
-
-        btn4.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                try {
-                    Toast.makeText(getActivity(), "Getting status...", Toast.LENGTH_LONG).show();
-                    sendMessage(new JSONObject().put("id", Constants.COMMANDS.GET_STATUS).toString());
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-
-            }
-        });
-
-        btn5.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                try {
-                    Toast.makeText(getActivity(), "Camera...", Toast.LENGTH_LONG).show();
-                    sendMessage(new JSONObject().put("id", Constants.COMMANDS.CAMERA_DISPLAY).toString());
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-
-            }
-        });
-
-        btn6.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-// display a message by using a Toast
-                //Toast.makeText(getActivity(), "Music...", Toast.LENGTH_LONG).show();
-                try {
-                    sendMessage(new JSONObject().put("id", Constants.COMMANDS.RAISE_VOLUME).toString());
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-
-        btn7.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-// display a message by using a Toast
-                //Toast.makeText(getActivity(), "Music...", Toast.LENGTH_LONG).show();
-                try {
-                    sendMessage(new JSONObject().put("id", Constants.COMMANDS.LOWER_VOLUME).toString());
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-        btn8.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                try {
-                    sendMessage(new JSONObject().put("id", Constants.COMMANDS.SET_BASE_IMAGE).toString());
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-
 
 
         return view;
@@ -445,6 +242,14 @@ public class BluetoothFragment extends Fragment {
         //mConversationView = view.findViewById(R.id.in);
         //mOutEditText = view.findViewById(R.id.edit_text_out);
         //mSendButton = view.findViewById(R.id.button_send);
+
+        mViewModel = new ViewModelProvider(requireActivity()).get(SharedViewModel.class);
+        mViewModel.messagesToBluetooth.observe(getViewLifecycleOwner(), messages -> {
+            while(!messages.isEmpty()) {
+                String next_message = messages.remove();
+                sendMessage(next_message);
+            }
+        });
     }
 
     /**
@@ -556,7 +361,7 @@ public class BluetoothFragment extends Fragment {
     /**
      * The Handler that gets information back from the BluetoothService
      */
-    private final Handler mHandler = new Handler() {
+    private final Handler mHandler = new Handler(Looper.getMainLooper()) {
         @Override
         public void handleMessage(Message msg) {
             FragmentActivity activity = getActivity();
@@ -597,15 +402,14 @@ public class BluetoothFragment extends Fragment {
                             Toast.makeText(activity,"Device name is: "+readMessage,
                                     Toast.LENGTH_LONG).show();
                             try {
-                                EditCSVFile(currentMacAddress,readMessage);
+                                setDeviceName(currentMacAddress, readMessage);
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
                             break;
 
                         case 's':
-                            Toast.makeText(activity,"Weights: "+readMessage,
-                                    Toast.LENGTH_LONG).show();
+                            Toast.makeText(activity,"Weights: "+readMessage, Toast.LENGTH_LONG).show();
                             break;
                     }
                     /*
@@ -626,14 +430,12 @@ public class BluetoothFragment extends Fragment {
                     // save the connected device's name
                     mConnectedDeviceName = msg.getData().getString(Constants.DEVICE_NAME);
                     if (null != activity) {
-                        Toast.makeText(activity, "Connected to "
-                                + mConnectedDeviceName, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(activity, "Connected to " + mConnectedDeviceName, Toast.LENGTH_SHORT).show();
                     }
                     break;
                 case Constants.MESSAGE_TOAST:
                     if (null != activity) {
-                        Toast.makeText(activity, msg.getData().getString(Constants.TOAST),
-                                Toast.LENGTH_SHORT).show();
+                        Toast.makeText(activity, msg.getData().getString(Constants.TOAST), Toast.LENGTH_SHORT).show();
                     }
                     break;
             }
@@ -740,80 +542,37 @@ public class BluetoothFragment extends Fragment {
         }
     }
 
-    public static void ReadCSVFile(String pathCSV) throws IOException {
-
+    public static void readDevicesFromFile(String pathCSV) throws IOException {
         DeviceDictionary.clear(); //clear this so that we know is empty
+
         BufferedReader csvReader = new BufferedReader(new FileReader(pathCSV));
         String row;
         while ((row = csvReader.readLine()) != null) {
-
              String[] DeviceNames = row.split(",");//this reads each line in the csv and splits it with commas
              DeviceDictionary.put(DeviceNames[0],DeviceNames[1]); //put the data in the dictionary -> MAC address/Device Name
         }
         csvReader.close();
-
     }
 
-    public static void WriteCSVFile(String macAddress, String deviceName) throws IOException {
+    public static void setDeviceName(String macAddress, String editedValue) throws IOException {
+        readDevicesFromFile(pathToCSV);
 
-        FileWriter csvWriter = new FileWriter(pathToCSV,true);
-        csvWriter.append(macAddress);
-        csvWriter.append(",");
-        csvWriter.append(deviceName);
-        csvWriter.append("\n");
-
-        csvWriter.flush();
-        csvWriter.close();
-    }
-
-    public static void WriteCSVFile(String macAddress) throws IOException {
-
-        FileWriter csvWriter = new FileWriter(pathToCSV,true);
-        csvWriter.append(macAddress);
-        csvWriter.append(",");
-        csvWriter.append("NoNameFound");
-        csvWriter.append("\n");
-
-        csvWriter.flush();
-        csvWriter.close();
-    }
-
-    public static void EditCSVFile(String macAddress, String editedValue) throws IOException {
-
-        ReadCSVFile(pathToCSV);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            DeviceDictionary.replace(macAddress, editedValue);
-        }
-        FileWriter csvWriter = new FileWriter(pathToCSV);
-
-        Enumeration<String> e = DeviceDictionary.keys();
-
-        while (e.hasMoreElements()){
-
-            String key = e.nextElement();
-
-            csvWriter.append(key);
-            csvWriter.append(",");
-            csvWriter.append(DeviceDictionary.get(key));
-            csvWriter.append("\n");
+            if (DeviceDictionary.containsKey(macAddress))
+                DeviceDictionary.replace(macAddress, editedValue);
+            else
+                DeviceDictionary.put(macAddress, editedValue);
         }
 
-        csvWriter.flush();
-        csvWriter.close();
-
-
+        writeDevicesToFile();
     }
 
-    public static void RefreshCSVFile() throws IOException {
-
+    public static void writeDevicesToFile() throws IOException {
         FileWriter csvWriter = new FileWriter(pathToCSV);
 
         Enumeration<String> e = DeviceDictionary.keys();
-
         while (e.hasMoreElements()){
-
             String key = e.nextElement();
-
             csvWriter.append(key);
             csvWriter.append(",");
             csvWriter.append(DeviceDictionary.get(key));
@@ -823,34 +582,4 @@ public class BluetoothFragment extends Fragment {
         csvWriter.flush();
         csvWriter.close();
     }
-
-    //BT STUFF
-    private class ClientClass extends Thread{
-
-        private BluetoothDevice device;
-        private BluetoothSocket socket;
-
-        @SuppressLint("MissingPermission")
-        public ClientClass (BluetoothDevice device1){
-
-            device = device1;
-
-            try {
-                socket = device.createRfcommSocketToServiceRecord(MY_UUID);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        public void run(){
-
-            try {
-                socket.connect();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-
 }

@@ -25,7 +25,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
@@ -239,7 +238,7 @@ public class DeviceListActivity extends Activity {
                 }
                 //when the discovery is finished just refresh the csv I guess
                 try {
-                    BluetoothFragment.RefreshCSVFile();
+                    BluetoothFragment.writeDevicesToFile();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
