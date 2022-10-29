@@ -239,7 +239,7 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         } else if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, CAMERA_REQUEST_CODE);
+            requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, EXTERNAL_STORAGE_REQUEST_CODE);
         }
 
         // Get status view by id
@@ -288,10 +288,10 @@ public class MainActivity extends AppCompatActivity {
         mCameraManager.stopTracking();
     }
 
-    public void stopTracking(int hour, int seconds){
+    public void stopTracking(int hour, int minutes){
         Calendar targetTime = Calendar.getInstance();
         targetTime.set(Calendar.HOUR, hour);
-        targetTime.set(Calendar.MINUTE, seconds);
+        targetTime.set(Calendar.MINUTE, minutes);
 
         mStopTrackingTimer = new Timer();
         mStopTrackingTimer.schedule(new TimerTask() {
@@ -363,7 +363,7 @@ public class MainActivity extends AppCompatActivity {
 
                     int valueInt = 0;
                     //new code to get the double
-                    double valueDouble =0;
+                    double valueDouble = 0;
                     Constants.COMMANDS id;
                     try {
                         readMessageJson = new JSONObject(readMessageStr);
@@ -422,7 +422,17 @@ public class MainActivity extends AppCompatActivity {
                             }
                             break;
                         case CAMERA_DISPLAY:
-                            togglePreviewVisibility();
+
+                            if (readMessageJson.has("state")){
+                                try {
+                                    togglePreviewVisibility(readMessageJson.getBoolean("state"));
+                                } catch (JSONException e) {
+                                    togglePreviewVisibility();
+                                    e.printStackTrace();
+                                }
+                            }
+                            else
+                                togglePreviewVisibility();
                             break;
                         case RAISE_VOLUME:
                             AudioManager audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
@@ -473,6 +483,26 @@ public class MainActivity extends AppCompatActivity {
                         case RESET_LOG:
                             createNewLogWriter();
                             break;
+                        case SET_CLOSING_TIME:
+                            int hour = 0;
+                            int minutes = 0;
+                            if (readMessageJson.has("time")){
+                                String time = "";
+                                try {
+                                    time = readMessageJson.getString("time");
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
+                                }
+                                String[] timeElements = time.split(":");
+                                if (timeElements.length != 2) break;
+                                hour = Integer.parseInt(timeElements[0]);
+                                minutes = Integer.parseInt(timeElements[1]);
+                            }
+                            stopTracking(hour, minutes);
+                            break;
+                        case CANCEL_CLOSING_TIME:
+                            cancelStopTrackingTimer();
+                            break;
                     }
 
                     Log.d(TAG, readMessageStr);
@@ -488,6 +518,10 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     };
+
+    private void togglePreviewVisibility(boolean newState) {
+        mPreviewView.setVisibility((newState) ? View.VISIBLE : View.INVISIBLE);
+    }
 
     private void togglePreviewVisibility(){
         int viewVisibility = mPreviewView.getVisibility();

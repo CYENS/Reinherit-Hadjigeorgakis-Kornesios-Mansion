@@ -8,7 +8,7 @@
     android:gravity="center|top"
     android:orientation="vertical"
     app:layout_anchorGravity="top"
-    tools:context=".CalibrationController"
+    tools:context=".PerformanceController"
     android:layout_marginTop="20dp">
 
     <View
@@ -27,7 +27,7 @@
         android:textAlignment="center">
 
         <TextView
-            android:id="@+id/textViewPC"
+            android:id="@+id/textView"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -36,7 +36,7 @@
             android:textAppearance="@style/TextAppearance.AppCompat.Large" />
 
         <Button
-            android:id="@+id/lowerVolumePC"
+            android:id="@+id/lowerVolume"
             android:layout_width="60dp"
             android:layout_height="60dp"
             android:insetLeft="2dp"
@@ -45,7 +45,7 @@
             android:textSize="30sp" />
 
         <Button
-            android:id="@+id/raiseVolumePC"
+            android:id="@+id/raiseVolume"
             android:layout_width="60dp"
             android:layout_height="60dp"
             android:insetLeft="2dp"
@@ -61,12 +61,12 @@
         android:layout_margin="2dp"/>
 
     <Button
-        android:id="@+id/cameraButton"
+        android:id="@+id/buttonResetLog"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="50dp"
         android:padding="10sp"
-        android:text="Camera on/off"
+        android:text="@string/button_reset_log"
         android:textSize="15sp" />
 
     <View
@@ -88,6 +88,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="50dp"
+										   
         android:hint="Enter Closing Time"
         android:text="18:15"
         android:gravity="center_horizontal"/>
@@ -134,7 +135,9 @@
         android:layout_width="match_parent"
         android:layout_height="12dp"
         android:layout_gravity="center"
-        android:contentDescription="Weight"
+        android:contentDescription="Musicians"
+        style="@style/Widget.AppCompat.SeekBar.Discrete"
+        android:tickMark="@drawable/tickmark"
         android:stepSize="1"
         android:value="0"
         android:valueFrom="0"

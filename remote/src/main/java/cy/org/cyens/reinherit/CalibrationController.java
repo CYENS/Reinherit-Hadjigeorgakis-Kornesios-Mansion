@@ -28,6 +28,7 @@ import cy.org.cyens.common.Constants;
  */
 public class CalibrationController extends Fragment {
     private SharedViewModel mViewModel;
+    private TextView mLastStatusView;
 
     public CalibrationController() {
         // Required empty public constructor
@@ -47,14 +48,6 @@ public class CalibrationController extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_calibration_controller, container, false);
-
-//new code more
-        Button btn1 = (Button) view.findViewById(R.id.startButton);
-        Button btn2 = (Button) view.findViewById(R.id.stopButton);
-        Button btn4 = (Button) view.findViewById(R.id.getStatusButton);
-        Button btn6 = (Button) view.findViewById(R.id.raiseVolume);
-        Button btn7 = (Button) view.findViewById(R.id.lowerVolume);
-        Button btn8 = (Button) view.findViewById(R.id.SetBaseButton);
 
         Slider slider3 = (Slider) view.findViewById(R.id.sliderMaxValue);
         slider3.addOnChangeListener((slider1, value, fromUser) -> {
@@ -83,6 +76,7 @@ public class CalibrationController extends Fragment {
             }
         });
 
+        Button btn1 = (Button) view.findViewById(R.id.startButton);
         btn1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -97,6 +91,7 @@ public class CalibrationController extends Fragment {
             }
         });
 
+        Button btn2 = (Button) view.findViewById(R.id.stopButton);
         btn2.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -111,6 +106,7 @@ public class CalibrationController extends Fragment {
             }
         });
 
+        Button btn4 = (Button) view.findViewById(R.id.getStatusButton);
         btn4.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -125,6 +121,7 @@ public class CalibrationController extends Fragment {
             }
         });
 
+        Button btn6 = (Button) view.findViewById(R.id.raiseVolume);
         btn6.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -138,6 +135,7 @@ public class CalibrationController extends Fragment {
             }
         });
 
+        Button btn7 = (Button) view.findViewById(R.id.lowerVolume);
         btn7.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -150,6 +148,8 @@ public class CalibrationController extends Fragment {
                 }
             }
         });
+
+        Button btn8 = (Button) view.findViewById(R.id.SetBaseButton);
         btn8.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -161,6 +161,35 @@ public class CalibrationController extends Fragment {
             }
         });
 
+        Button btn5 = (Button) view.findViewById(R.id.cameraOnButton);
+        btn5.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                try {
+                    Toast.makeText(getActivity(), "Camera...", Toast.LENGTH_LONG).show();
+                    mViewModel.sendMessage(new JSONObject().put("id", Constants.COMMANDS.CAMERA_DISPLAY).put("state",true).toString());
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+            }
+        });
+        Button btnCameraOff = (Button) view.findViewById(R.id.cameraOffButton);
+        btn5.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                try {
+                    Toast.makeText(getActivity(), "Camera...", Toast.LENGTH_LONG).show();
+                    mViewModel.sendMessage(new JSONObject().put("id", Constants.COMMANDS.CAMERA_DISPLAY).put("state",false).toString());
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+            }
+        });
+
         // Inflate the layout for this fragment
         return view;
     }
@@ -169,9 +198,13 @@ public class CalibrationController extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        mLastStatusView = view.findViewById(R.id.text_last_status);
         mViewModel = new ViewModelProvider(requireActivity()).get(SharedViewModel.class);
         mViewModel.messagesFromBluetooth.observe(getViewLifecycleOwner(), messages -> {
-
+            while(!messages.isEmpty()) {
+                String next_message = messages.remove();
+                mLastStatusView.setText(next_message);
+            }
         });
     }
 }

@@ -59,6 +59,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.Queue;
 import java.util.UUID;
 
 import cy.org.cyens.common.BluetoothService;
@@ -217,7 +218,7 @@ public class BluetoothFragment extends Fragment {
         viewPager = view.findViewById(R.id.mode_view_pager);
         final ModesAdapter adapter = new ModesAdapter(getContext(), getChildFragmentManager(), tabLayout.getTabCount());
         viewPager.setAdapter(adapter);
-        //tabLayout.setupWithViewPager(viewPager);
+
         viewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
@@ -232,17 +233,12 @@ public class BluetoothFragment extends Fragment {
             }
         });
 
-
         return view;
         //end of new code more
     }
 
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
-        //mConversationView = view.findViewById(R.id.in);
-        //mOutEditText = view.findViewById(R.id.edit_text_out);
-        //mSendButton = view.findViewById(R.id.button_send);
-
         mViewModel = new ViewModelProvider(requireActivity()).get(SharedViewModel.class);
         mViewModel.messagesToBluetooth.observe(getViewLifecycleOwner(), messages -> {
             while(!messages.isEmpty()) {
@@ -263,25 +259,7 @@ public class BluetoothFragment extends Fragment {
         if (activity == null) {
             return;
         }
-        /*
-        mConversationArrayAdapter = new ArrayAdapter<>(activity, R.layout.message);
 
-        mConversationView.setAdapter(mConversationArrayAdapter);
-
-        // Initialize the compose field with a listener for the return key
-        mOutEditText.setOnEditorActionListener(mWriteListener);
-
-        // Initialize the send button with a listener that for click events
-        mSendButton.setOnClickListener(v -> {
-            // Send a message using content of the edit text widget
-            View view = getView();
-            if (null != view) {
-                TextView textView = view.findViewById(R.id.edit_text_out);
-                String message = textView.getText().toString();
-                sendMessage(message);
-            }
-        });
-        */
         // Initialize the BluetoothService to perform bluetooth connections
         mService = new BluetoothService(activity, mHandler);
 
@@ -346,7 +324,6 @@ public class BluetoothFragment extends Fragment {
      */
     private void setStatus(int resId) {
         status.setText(resId);
-
     }
 
     /**
@@ -399,9 +376,9 @@ public class BluetoothFragment extends Fragment {
                     switch(prefix){
 
                         case 'n':
-                            Toast.makeText(activity,"Device name is: "+readMessage,
-                                    Toast.LENGTH_LONG).show();
+                            Toast.makeText(activity,"Device name is: "+readMessage, Toast.LENGTH_LONG).show();
                             try {
+                                setStatus("Connected to: " + readMessage + " (" + currentMacAddress + ")");
                                 setDeviceName(currentMacAddress, readMessage);
                             } catch (IOException e) {
                                 e.printStackTrace();
@@ -409,22 +386,10 @@ public class BluetoothFragment extends Fragment {
                             break;
 
                         case 's':
+                            mViewModel.receiveMessage(readMessage);
                             Toast.makeText(activity,"Weights: "+readMessage, Toast.LENGTH_LONG).show();
                             break;
                     }
-                    /*
-                    mConversationArrayAdapter.add(mConnectedDeviceName + ":  " + readMessage);
-                    Bitmap bitmap=BitmapFactory.decodeByteArray(readBuf,0,msg.arg1);
-                    try (FileOutputStream out = new FileOutputStream(Environment.getExternalStorageDirectory() +"/ReinheritImages/" + "/surfaceview.png")) {
-                        bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
-                    } catch (FileNotFoundException e) {
-                        e.printStackTrace();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-
-                     */
-
                     break;
                 case Constants.MESSAGE_DEVICE_NAME:
                     // save the connected device's name

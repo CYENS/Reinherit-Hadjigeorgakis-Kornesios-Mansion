@@ -36,6 +36,7 @@ public class PerformanceController extends Fragment {
     SharedViewModel mViewModel;
     TimePickerDialog mClosingTimePicker;
     EditText mClosingTimeText;
+    private TextView mLastStatusView;
 
     public PerformanceController() {
         // Required empty public constructor
@@ -60,29 +61,95 @@ public class PerformanceController extends Fragment {
         slider2.addOnChangeListener((slider1, value, fromUser) -> {
             try {
                 mViewModel.sendMessage(new JSONObject().put("id", Constants.COMMANDS.SET_MUSICIANS).put("val",value).toString());
-                /*
-                TextView musiciansText = (TextView) view.findViewById(R.id.sliderMusiciansText);
-                int convertedValue = (int)value;
-                String sliderValue = Integer.toString(convertedValue);
-                musiciansText.setText(sliderValue);
-                */
             } catch (JSONException e) {
                 e.printStackTrace();
             }
         });
 
-        Button btn5 = (Button) view.findViewById(R.id.cameraButton);
-        btn5.setOnClickListener(new View.OnClickListener() {
+        Button btn4 = (Button) view.findViewById(R.id.getStatusButton);
+        btn4.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
                 try {
-                    Toast.makeText(getActivity(), "Camera...", Toast.LENGTH_LONG).show();
-                    mViewModel.sendMessage(new JSONObject().put("id", Constants.COMMANDS.CAMERA_DISPLAY).toString());
+                    Toast.makeText(getActivity(), "Getting status...", Toast.LENGTH_LONG).show();
+                    mViewModel.sendMessage(new JSONObject().put("id", Constants.COMMANDS.GET_STATUS).toString());
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
 
+            }
+        });
+
+        Button btn6 = (Button) view.findViewById(R.id.raiseVolume);
+        btn6.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+// display a message by using a Toast
+                //Toast.makeText(getActivity(), "Music...", Toast.LENGTH_LONG).show();
+                try {
+                    mViewModel.sendMessage(new JSONObject().put("id", Constants.COMMANDS.RAISE_VOLUME).toString());
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        Button btn7 = (Button) view.findViewById(R.id.lowerVolume);
+        btn7.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+// display a message by using a Toast
+                //Toast.makeText(getActivity(), "Music...", Toast.LENGTH_LONG).show();
+                try {
+                    mViewModel.sendMessage(new JSONObject().put("id", Constants.COMMANDS.LOWER_VOLUME).toString());
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        Button btn1 = (Button) view.findViewById(R.id.startButton);
+        btn1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                try {
+                    Toast.makeText(getActivity(), "Starting...", Toast.LENGTH_LONG).show();
+                    mViewModel.sendMessage(new JSONObject().put("id", Constants.COMMANDS.START).put("val","0").toString());
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+            }
+        });
+
+        Button btn2 = (Button) view.findViewById(R.id.stopButton);
+        btn2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                try {
+                    Toast.makeText(getActivity(), "Stopping...", Toast.LENGTH_LONG).show();
+                    mViewModel.sendMessage(new JSONObject().put("id", Constants.COMMANDS.STOP).toString());
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+            }
+        });
+
+        Button btn3 = (Button) view.findViewById(R.id.buttonResetLog);
+        btn3.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                try {
+                    Toast.makeText(getActivity(), "Resetting logs...", Toast.LENGTH_LONG).show();
+                    mViewModel.sendMessage(new JSONObject().put("id", Constants.COMMANDS.RESET_LOG).toString());
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
             }
         });
 
@@ -114,9 +181,39 @@ public class PerformanceController extends Fragment {
             }
         });
 
+        Button btnScheduleClosingTime = (Button) view.findViewById(R.id.setClosingTime);
+        btnScheduleClosingTime.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try {
+                    Toast.makeText(getActivity(), "Setting closing time...", Toast.LENGTH_LONG).show();
+                    mViewModel.sendMessage(new JSONObject().put("id", Constants.COMMANDS.SET_CLOSING_TIME).put("time", mClosingTimeText.getText().toString()).toString());
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        Button btnCancelClosingTime = (Button) view.findViewById(R.id.cancelClosingTime);
+        btnCancelClosingTime.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try {
+                    Toast.makeText(getActivity(), "Cancelling closing time...", Toast.LENGTH_LONG).show();
+                    mViewModel.sendMessage(new JSONObject().put("id", Constants.COMMANDS.CANCEL_CLOSING_TIME).toString());
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        mLastStatusView = view.findViewById(R.id.text_last_status);
         mViewModel = new ViewModelProvider(requireActivity()).get(SharedViewModel.class);
         mViewModel.messagesFromBluetooth.observe(getViewLifecycleOwner(), messages -> {
-
+            while(!messages.isEmpty()) {
+                String next_message = messages.remove();
+                mLastStatusView.setText(next_message);
+            }
         });
     }
 }

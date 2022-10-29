@@ -6,7 +6,7 @@ android {
     compileSdk 32
 
     defaultConfig {
-        applicationId "cy.org.cyens.reinherit"
+        applicationId 'cy.org.cyens.itica.reinherit'
         minSdk 23
         targetSdk 32
         versionCode 1

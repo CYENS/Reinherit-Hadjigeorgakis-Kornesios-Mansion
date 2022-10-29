@@ -47,6 +47,8 @@
     <string name="permission_location_fine_denied">Access fine location permissions denied</string>
     <string name="permission_location_coarse_granted">Access coarse location permissions granted</string>
     <string name="permission_location_coarse_denied">Access coarse location permissions denied</string>
+    <string name="ex_storage_permission_granted">External storage permission granted</string>
+    <string name="ex_storage_permission_denied">External storage permission denied</string>
 
 
     <!-- UI -->
@@ -55,13 +57,13 @@
     <string name="slider_freq">Frequency (Hz)</string>
     <string name="stop">Stop</string>
     <string name="start">Start</string>
-    <string name="button_reset_log">Reset\nlog</string>
+    <string name="button_reset_log">Reset log</string>
     <string name="get_status">Get status</string>
     <string name="test">test</string>
     <string name="title_tracker">Tracker</string>
     <string name="label_volume">Volume: </string>
-    <string name="label_performance_tab">Performance</string>
-    <string name="label_calibration_tab">Calibration</string>
+    <string name="label_performance_tab">Live</string>
+    <string name="label_calibration_tab">Calibrate</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

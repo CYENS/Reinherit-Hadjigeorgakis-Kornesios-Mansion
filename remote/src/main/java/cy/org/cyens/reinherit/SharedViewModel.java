@@ -21,4 +21,10 @@ public class SharedViewModel extends ViewModel {
         messages.add(msg);
         messagesToBluetooth.postValue(messages);
     }
+
+    public void receiveMessage(String msg) {
+        Queue<String> messages = messagesFromBluetooth.getValue();
+        messages.add(msg);
+        messagesFromBluetooth.postValue(messages);
+    }
 }

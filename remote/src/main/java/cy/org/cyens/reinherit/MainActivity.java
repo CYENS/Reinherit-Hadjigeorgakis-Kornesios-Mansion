@@ -1,9 +1,13 @@
 package cy.org.cyens.reinherit;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.Settings;
 import android.view.Menu;
 import android.widget.Toast;
 
@@ -23,6 +27,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int BLUETOOTH_REQUEST_CODE = 100;
     private static final int ACCESS_FINE_LOCATION_CODE = 101;
     private static final int ACCESS_COARSE_LOCATION_CODE = 102;
+    private static final int EXTERNAL_STORAGE_REQUEST_CODE = 101;
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
@@ -52,6 +57,12 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(this, R.string.permission_location_coarse_denied,
                         Toast.LENGTH_LONG).show();
             }
+        }else if (requestCode == EXTERNAL_STORAGE_REQUEST_CODE) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, R.string.ex_storage_permission_granted, Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(this, R.string.ex_storage_permission_denied, Toast.LENGTH_LONG).show();
+            }
         }
     }
 
@@ -73,6 +84,20 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
                         ACCESS_COARSE_LOCATION_CODE);
+            }
+        }
+
+        // Required permissions for external storage management
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) { // for android sdk >=30
+            if (!Environment.isExternalStorageManager()) {
+                Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                Uri uri = Uri.fromParts("package", getPackageName(), null);
+                intent.setData(uri);
+                startActivity(intent);
+            }
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, EXTERNAL_STORAGE_REQUEST_CODE);
             }
         }
 

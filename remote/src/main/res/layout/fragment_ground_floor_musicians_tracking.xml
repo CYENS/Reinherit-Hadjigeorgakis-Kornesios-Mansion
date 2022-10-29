@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_gravity="top"
+    android:gravity="center|top"
+    android:orientation="vertical"
+    app:layout_anchorGravity="top"
+    tools:context=".GroundFloorMusiciansTracking"
+    android:layout_marginTop="20dp">
+
+    <TextView
+        android:id="@+id/textKitchenTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Kitchen"
+        android:textAppearance="@style/TextAppearance.AppCompat.Large"
+        android:textSize="24sp"
+        android:translationY="10dp"
+        android:layout_marginTop="-15dp" />
+
+    <com.google.android.material.slider.Slider
+        android:id="@+id/sliderKitchenValue"
+        android:layout_width="match_parent"
+        android:layout_height="12dp"
+        android:layout_gravity="center"
+        android:contentDescription="Kitchen"
+        android:stepSize="1"
+        android:value="0"
+        android:valueFrom="0"
+        android:valueTo="10" />
+    <TextView
+        android:id="@+id/textSculpturesTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Sculptures"
+        android:textAppearance="@style/TextAppearance.AppCompat.Large"
+        android:textSize="24sp"
+        android:translationY="10dp"
+        android:layout_marginTop="-15dp" />
+
+    <com.google.android.material.slider.Slider
+        android:id="@+id/sliderSculpturesValue"
+        android:layout_width="match_parent"
+        android:layout_height="12dp"
+        android:layout_gravity="center"
+        android:contentDescription="Sculptures"
+        android:stepSize="1"
+        android:value="0"
+        android:valueFrom="0"
+        android:valueTo="10" />
+    <TextView
+        android:id="@+id/textHammamTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Hammam"
+        android:textAppearance="@style/TextAppearance.AppCompat.Large"
+        android:textSize="24sp"
+        android:translationY="10dp"
+        android:layout_marginTop="-15dp" />
+
+    <com.google.android.material.slider.Slider
+        android:id="@+id/sliderHammamValue"
+        android:layout_width="match_parent"
+        android:layout_height="12dp"
+        android:layout_gravity="center"
+        android:contentDescription="Hammam"
+        android:stepSize="1"
+        android:value="0"
+        android:valueFrom="0"
+        android:valueTo="10" />
+    <TextView
+        android:id="@+id/textWindsTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Winds"
+        android:textAppearance="@style/TextAppearance.AppCompat.Large"
+        android:textSize="24sp"
+        android:translationY="10dp"
+        android:layout_marginTop="-15dp" />
+
+    <com.google.android.material.slider.Slider
+        android:id="@+id/sliderWindsValue"
+        android:layout_width="match_parent"
+        android:layout_height="12dp"
+        android:layout_gravity="center"
+        android:contentDescription="Winds"
+        android:stepSize="1"
+        android:value="0"
+        android:valueFrom="0"
+        android:valueTo="10" />
+    <TextView
+        android:id="@+id/textFountainTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Fountain"
+        android:textAppearance="@style/TextAppearance.AppCompat.Large"
+        android:textSize="24sp"
+        android:translationY="10dp"
+        android:layout_marginTop="-15dp" />
+
+    <com.google.android.material.slider.Slider
+        android:id="@+id/sliderFountainValue"
+        android:layout_width="match_parent"
+        android:layout_height="12dp"
+        android:layout_gravity="center"
+        android:contentDescription="Fountain"
+        android:stepSize="1"
+        android:value="10"
+        android:valueFrom="0"
+        android:valueTo="10" />
+    <TextView
+        android:id="@+id/textVaultTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Vault"
+        android:textAppearance="@style/TextAppearance.AppCompat.Large"
+        android:textSize="24sp"
+        android:translationY="10dp"
+        android:layout_marginTop="-15dp" />
+
+    <com.google.android.material.slider.Slider
+        android:id="@+id/sliderVaultValue"
+        android:layout_width="match_parent"
+        android:layout_height="12dp"
+        android:layout_gravity="center"
+        android:contentDescription="Vault"
+        android:stepSize="1"
+        android:value="0"
+        android:valueFrom="0"
+        android:valueTo="10" />
+
+    <Button
+        android:id="@+id/saveAllValues"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="50dp"
+        android:padding="10sp"
+        android:text="Save all"
+        android:textSize="15sp" />
+
+    <Button
+        android:id="@+id/resetValues"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="50dp"
+        android:layout_marginTop="10dp"
+        android:text="Reset all"
+        android:textSize="15sp" />
+</LinearLayout>

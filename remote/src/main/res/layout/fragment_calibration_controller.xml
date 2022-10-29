@@ -32,7 +32,8 @@
         android:text="Weight"
         android:textAppearance="@style/TextAppearance.AppCompat.Large"
         android:textSize="24sp"
-        android:translationY="10dp" />
+        android:translationY="10dp"
+        android:layout_marginTop="-10dp"/>
 
     <com.google.android.material.slider.Slider
         android:id="@+id/sliderWeight"
@@ -52,7 +53,8 @@
         android:text="Minimum Threshold"
         android:textAppearance="@style/TextAppearance.AppCompat.Large"
         android:textSize="24sp"
-        android:translationY="10dp" />
+        android:translationY="10dp"
+        android:layout_marginTop="-15dp" />
 
     <com.google.android.material.slider.Slider
         android:id="@+id/sliderMinValue"
@@ -72,7 +74,8 @@
         android:text="Maximum Value"
         android:textAppearance="@style/TextAppearance.AppCompat.Large"
         android:textSize="24sp"
-        android:translationY="10dp" />
+        android:translationY="10dp"
+        android:layout_marginTop="-15dp" />
 
     <com.google.android.material.slider.Slider
         android:id="@+id/sliderMaxValue"
@@ -126,6 +129,34 @@
             android:insetRight="2dp"
             android:text="+"
             android:textSize="30sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="50dp"
+        android:gravity="center|center_vertical"
+        android:orientation="horizontal"
+        android:textAlignment="center">
+
+        <Button
+            android:id="@+id/cameraOnButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="10dp"
+            android:layout_weight="0.5"
+            android:text="Camera On"
+            android:textSize="15sp" />
+
+        <Button
+            android:id="@+id/cameraOffButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_weight="0.5"
+            android:text="Camera Off"
+            android:textSize="15sp" />
+
     </LinearLayout>
 
     <View

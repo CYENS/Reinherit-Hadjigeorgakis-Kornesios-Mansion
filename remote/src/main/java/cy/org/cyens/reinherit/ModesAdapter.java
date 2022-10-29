@@ -10,6 +10,11 @@ public class ModesAdapter extends FragmentPagerAdapter {
     Context context;
     int totalTabs;
 
+    PerformanceController mPerformanceControllerFragment;
+    CalibrationController mCalibrationControllerFragment;
+    GroundFloorMusiciansTracking mGroundFloorMusiciansTracking;
+    UpperFloorMusiciansTracking mUpperFloorMusiciansTracking;
+
    public ModesAdapter(Context c, FragmentManager fm, int totalTabs)   {
         super(fm);
         context = c;
@@ -19,11 +24,22 @@ public class ModesAdapter extends FragmentPagerAdapter {
     public Fragment getItem(int position) {
         switch (position) {
             case 0:
-                PerformanceController mPerformanceControllerFragment = new PerformanceController();
+                if (mPerformanceControllerFragment == null)
+                    mPerformanceControllerFragment = new PerformanceController();
+
                 return mPerformanceControllerFragment;
             case 1:
-                CalibrationController mCalibrationControllerFragment = new CalibrationController();
+                if (mCalibrationControllerFragment == null)
+                    mCalibrationControllerFragment = new CalibrationController();
                 return mCalibrationControllerFragment;
+            case 2:
+                if (mGroundFloorMusiciansTracking == null)
+                    mGroundFloorMusiciansTracking = new GroundFloorMusiciansTracking();
+                return mGroundFloorMusiciansTracking;
+            case 3:
+                if (mUpperFloorMusiciansTracking == null)
+                    mUpperFloorMusiciansTracking = new UpperFloorMusiciansTracking();
+                return mUpperFloorMusiciansTracking;
             default:
                 return null;
         }

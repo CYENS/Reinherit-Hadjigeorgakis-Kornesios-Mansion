@@ -29,7 +29,9 @@ public interface Constants {
         SET_WEIGHT,
         SET_BASE_IMAGE,
         IMAGE,
-        RESET_LOG;
+        RESET_LOG,
+        CANCEL_CLOSING_TIME,
+        SET_CLOSING_TIME;
 
         public static COMMANDS fromString(String x) {
             switch(x) {
