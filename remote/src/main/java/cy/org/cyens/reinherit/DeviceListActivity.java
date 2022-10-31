@@ -118,9 +118,9 @@ public class DeviceListActivity extends Activity {
         if (pairedDevices.size() > 0) {
             findViewById(R.id.title_paired_devices).setVisibility(View.VISIBLE);
             for (BluetoothDevice device : pairedDevices) {
-                String tempMacAddress = "TempMacAddress"; //new code starts here
+                String tempMacAddress = "TempMacAddress";
                 String tempDeviceName = "NoNameDevice";
-                if(BluetoothFragment.DeviceDictionary.containsKey(device.getAddress())){
+                if(BluetoothFragment.DeviceDictionary.containsKey(device.getAddress())){ //check the dictionary to see if the MAC address of this device has an associated name with it
                     tempMacAddress = device.getAddress();
                     tempDeviceName = BluetoothFragment.DeviceDictionary.get(device.getAddress());
                 }else {
@@ -213,16 +213,16 @@ public class DeviceListActivity extends Activity {
                 if (device != null && device.getBondState() != BluetoothDevice.BOND_BONDED) {
                     String tempMacAddress = "TempMacAddress";
                     String tempDeviceName = "NoNameDevice";
-                    if(BluetoothFragment.DeviceDictionary.containsKey(device.getAddress())){
+                    if(BluetoothFragment.DeviceDictionary.containsKey(device.getAddress())){ //check the dictionary to see if the MAC address of this device has an associated name with it
                         tempMacAddress = device.getAddress();
                         tempDeviceName = BluetoothFragment.DeviceDictionary.get(device.getAddress());
                     }else {
                         tempMacAddress = device.getAddress();
                         tempDeviceName = device.getName();
                     }
-                    mNewDevicesArrayAdapter.add(tempDeviceName/*device.getName()*/ + "\n" + tempMacAddress/*device.getAddress()*/);//when we find devices add them to our dictionary here and when we establish connection we send the proper name again and we edit the dictionary and the csv
+                    mNewDevicesArrayAdapter.add(tempDeviceName + "\n" + tempMacAddress);//when we find devices add them to our dictionary here and when we establish connection we send the proper name again and we edit the dictionary and the csv
                     String deviceName;
-                    if(device.getName() == null)
+                    if(device.getName() == null) //if the device doesn't have a name and it's not in the dictionary give it a default name
                         deviceName = "NoNameDevice";
                     else
                         deviceName = tempDeviceName;

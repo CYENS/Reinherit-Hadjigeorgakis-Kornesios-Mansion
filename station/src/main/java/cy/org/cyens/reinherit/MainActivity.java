@@ -62,9 +62,8 @@ public class MainActivity extends AppCompatActivity {
     private static final int CAMERA_REQUEST_CODE = 100;
     private static final int EXTERNAL_STORAGE_REQUEST_CODE = 101;
 
-    // new code
+    // max number of people to detect
     private static final int MAX_PERSON_COUNTER_HISTORY_SIZE = 8;
-    // end new code
 
     private static final String TAG = MainActivity.class.getName();
     @SuppressLint("SimpleDateFormat")
@@ -205,6 +204,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        //create folders to store image and log data
         File dataDir = new File(Environment.getExternalStorageDirectory().getPath() + "/Reinherit/");
         File logDir = new File(dataDir.getPath() + "/Logs/");
         if (!logDir.exists()){
@@ -276,6 +276,7 @@ public class MainActivity extends AppCompatActivity {
         createNewLogWriter();
     }
 
+    //start tracking people
     public void startTracking(){
         setStatus(mConnectionStatus, "Starting tracking");
         mSoundManager.stopSound(0);
@@ -288,6 +289,7 @@ public class MainActivity extends AppCompatActivity {
         mCameraManager.stopTracking();
     }
 
+    //stop tracking people after a period of time
     public void stopTracking(int hour, int minutes){
         Calendar targetTime = Calendar.getInstance();
         targetTime.set(Calendar.HOUR, hour);
@@ -362,7 +364,7 @@ public class MainActivity extends AppCompatActivity {
                     JSONObject readMessageJson;
 
                     int valueInt = 0;
-                    //new code to get the double
+                    //get a double if the variable val is a double
                     double valueDouble = 0;
                     Constants.COMMANDS id;
                     try {
@@ -384,25 +386,28 @@ public class MainActivity extends AppCompatActivity {
                             mTrackerText = findViewById(R.id.textViewTracker);
                             String textToSend = "s"+mTrackerText.getText();
                             mBluetoothManager.write(textToSend.getBytes());
-                            //end of new code
 
+                            //save a screenshot of the camera
                             ImageUtilities.saveBitmap(mPreviewView.getBitmap(), "gs_");
                             break;
                         case RESET_CAMERA_POSE:
                             break;
                         case SET_FREQ:
-                            Slider slider = findViewById(R.id.sliderFreq); //even more new code here
+                            //set the frequency of the test sound and adjust the position of the slider UI
+                            Slider slider = findViewById(R.id.sliderFreq);
                             slider.setValue(valueInt);
                             break;
                         case START:
+                            //start all sounds
                             soundStopped = false;
                             break;
                         case STOP:
+                            //stop all sounds
                             mSoundManager.stopSound(0);
                             mCameraManager.resetPersonCounterData();
                             soundStopped = true;
                             break;
-                        //new code here
+                        //play a test sound for debug purposes
                         case PLAY_SOUND:
                             if(isPlaying){
                                 mediaPlayer.stop();
@@ -421,6 +426,7 @@ public class MainActivity extends AppCompatActivity {
                                 }
                             }
                             break;
+                            //turn off the camera display view on the UI to save battery
                         case CAMERA_DISPLAY:
 
                             if (readMessageJson.has("state")){
@@ -434,19 +440,23 @@ public class MainActivity extends AppCompatActivity {
                             else
                                 togglePreviewVisibility();
                             break;
+                            //raise the volume of all sounds
                         case RAISE_VOLUME:
                             AudioManager audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
                             audioManager.adjustVolume(AudioManager.ADJUST_RAISE, AudioManager.FLAG_PLAY_SOUND);
                             break;
+                            //lower the volume of all sounds
                         case LOWER_VOLUME:
                             AudioManager audioManager2 = (AudioManager) getSystemService(AUDIO_SERVICE);
                             audioManager2.adjustVolume(AudioManager.ADJUST_LOWER, AudioManager.FLAG_PLAY_SOUND);
                             break;
+                            //set the number of musicians that are in place
                         case SET_MUSICIANS:
                             NumberOfMusicians = (int)valueInt;
                             CameraInputManager.MetricsData md = mCameraManager.getMetricsData();
                             mLogDetectWriter.appendData(String.format(Locale.US, "%s,%d,%f,%f,%f,%f,%f,%f,%f,%d\n", mDateFormatter.format(Calendar.getInstance().getTime()), -1, -1.0, -1.0, -1.0, -1.0,  md.mBaseMetricWeight, md.mMinMetricValue, md.mMaxMetricValue, NumberOfMusicians));
                             break;
+                            //set the max value weight
                         case SET_MAX_VALUE:
                             mCameraManager.getMetricsData().setMaxValue((int) valueInt);
                             saveMetricsData();
@@ -456,6 +466,7 @@ public class MainActivity extends AppCompatActivity {
                                 e.printStackTrace();
                             }
                             break;
+                            //set the minimum value weight
                         case SET_MIN_VALUE:
                             mCameraManager.getMetricsData().setMinValue((int) valueInt);
                             saveMetricsData();
@@ -465,6 +476,7 @@ public class MainActivity extends AppCompatActivity {
                                 e.printStackTrace();
                             }
                             break;
+                            //set the general weight
                         case SET_WEIGHT:
                             mCameraManager.getMetricsData().setBaseFlowWeight((float) valueDouble);
                             saveMetricsData();
@@ -474,15 +486,19 @@ public class MainActivity extends AppCompatActivity {
                                 e.printStackTrace();
                             }
                             break;
+                            //Capture an image to be set as a base image to compare with every frame
                         case SET_BASE_IMAGE:
                             mCameraManager.resetBaseFrame();
+                            //capture a screenshot
                             ImageUtilities.takeScreenshot(mPreviewView, "bi");
                             CameraInputManager.MetricsData md2 = mCameraManager.getMetricsData();
                             mLogDetectWriter.appendData(String.format(Locale.US, "%s,%d,%f,%f,%f,%f,%f,%f,%f,%d\n", mDateFormatter.format(Calendar.getInstance().getTime()), -1, -1.0, -1.0, -1.0, -1.0,  md2.mBaseMetricWeight, md2.mMinMetricValue, md2.mMaxMetricValue, NumberOfMusicians));
                             break;
+                            //reset the logs
                         case RESET_LOG:
                             createNewLogWriter();
                             break;
+                            //receive a closing time to turn off the sounds
                         case SET_CLOSING_TIME:
                             int hour = 0;
                             int minutes = 0;
@@ -528,6 +544,7 @@ public class MainActivity extends AppCompatActivity {
         mPreviewView.setVisibility((viewVisibility == View.VISIBLE) ? View.INVISIBLE : View.VISIBLE);
     }
 
+    //setup listeners for the buttons
     private void addUiListeners() {
 
         mDeviceNameText.setOnEditorActionListener((v, actionId, event) -> {
@@ -559,25 +576,7 @@ public class MainActivity extends AppCompatActivity {
             ImageUtilities.saveBitmap(mPreviewView.getBitmap(), "db-pv");
 
             mCameraManager.captureDebugImages("db");
-            /*
-            if (isPlaying) {
 
-                mediaPlayer.stop();
-                mediaPlayer.release();
-                isPlaying = false;
-
-            } else {
-
-                String soundPath = Environment.getExternalStorageDirectory().getPath() + "/Reinherit/sound1.wav";
-                File file = new File(soundPath);//maybe this is not needed
-                if(file.exists()) {
-                    mediaPlayer = MediaPlayer.create(MainActivity.this, Uri.parse(soundPath));
-                    mediaPlayer.start();
-                    mediaPlayer.setLooping(true);
-                    isPlaying = true;
-                }
-            }
-            */
         });
 
         Button btn4 = findViewById(R.id.setBaseImage);
@@ -607,6 +606,7 @@ public class MainActivity extends AppCompatActivity {
         runOnUiThread(() -> status.setText(subTitle));
     }
 
+    //read the device name from the the file on startup
     private boolean readDeviceName(){
         try {
             String filePath = Environment.getExternalStorageDirectory().getPath() + "/Reinherit/Logs/Weight.txt"; //file path
@@ -634,6 +634,7 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
+    //prepare the csv file to be written with data
     private void createNewLogWriter() {
         if (mLogDetectWriter != null){
             mLogDetectWriter.close();
@@ -672,6 +673,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    //read the weights from txt file when the application starts
     private void readWeight(){
 
         try {
@@ -710,6 +712,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    //Update the weights in the csv file everytime there is a change
     private void UpdateWeightsCSV() throws IOException {
         FileWriter csvWriter = new FileWriter(Environment.getExternalStorageDirectory().getPath() + "/Reinherit/Logs/WeightsFile.csv", true);
         CameraInputManager.MetricsData md = mCameraManager.getMetricsData();

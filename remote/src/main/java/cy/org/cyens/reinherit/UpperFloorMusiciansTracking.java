@@ -43,6 +43,7 @@ public class UpperFloorMusiciansTracking extends Fragment {
         addButtonListeners(view);
     }
 
+    //get references from all sliders in the view
     private void retrieveSliders(@NonNull View view) {
         if (mSliders == null || mSliders.length != AREAS_ON_FLOOR){
             mSliders = new Slider[AREAS_ON_FLOOR];

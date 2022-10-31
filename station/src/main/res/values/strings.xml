@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-    <string name="app_name">Reinherit Station</string>
+    <string name="app_name">ReInHerit Station v2</string>
 
     <string name="re_calibrate">Re-calibrate camera</string>
     <string name="re_estimate_camera_pose">Reset camera pose</string>

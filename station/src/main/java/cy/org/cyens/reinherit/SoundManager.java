@@ -21,9 +21,11 @@ public class SoundManager {
     //This is a dictionary to save every mac address as a key and the device name as a value
     public Hashtable<Integer, MusicThread> mMusicThreads = new Hashtable<Integer, MusicThread>();
 
+    //Create a thread to constantly play a default background noise for each station
     private MusicThread backgroundAudioMediaThread;
     private boolean isBackgroundAudioPlaying = false;
 
+    //Create a media player object for each of the five sounds that needs to be played
     protected static MediaPlayer createMediaPlayer(int id, String filePrefix, String fileExtension, Activity parentActivity){
         String soundPath = String.format(Locale.US, "%s%d.%s", filePrefix, id, fileExtension);
         File soundFile = new File(soundPath);
@@ -40,12 +42,13 @@ public class SoundManager {
         startBackgroundAudio(includeBackgroundAudio);
     }
 
+    //Start the background audio
     private void startBackgroundAudio(boolean includeBackgroundAudio) {
         if (includeBackgroundAudio) {
-            if (backgroundAudioMediaThread == null)
+            if (backgroundAudioMediaThread == null)// if no audio background is playling create a thread for it
                 backgroundAudioMediaThread = new MusicThread(0, mSoundFilesNamePrefix, mSoundFileExtension, mParentActivity, mLoopSounds);
 
-            backgroundAudioMediaThread.start();
+            backgroundAudioMediaThread.start();// start the thread
             isBackgroundAudioPlaying = true;
         }
         else
@@ -66,20 +69,22 @@ public class SoundManager {
         mSoundFilesNamePrefix = Environment.getExternalStorageDirectory().getPath() + folder + soundFilePrefix;
     }
 
+    //make the sounds loop
     public void setLoopSounds(boolean loopSounds){
         mLoopSounds = loopSounds;
     }
 
+    //play sounds based on how many people are detected at any given time
     public void playSound(int index){
         if (backgroundAudioMediaThread != null && !isBackgroundAudioPlaying) {
             startBackgroundAudio(true);
         }
 
-        stopSound(index+1);
+        stopSound(index+1); //stop sounds that were playing when more people were present in the camera view
         for(int i = 1; i <= index; i++){
             if(mMusicThreads.containsKey(i)){
                 MusicThread thread = Objects.requireNonNull(mMusicThreads.get(i));
-                if(!thread.isAlive()){
+                if(!thread.isAlive()){//check if the sound is already playing
                     thread.start();
                 }
             }else{
@@ -90,6 +95,7 @@ public class SoundManager {
         }
     }
 
+    //stop sounds
     public void stopSound(int index){
         if (index == 0 && backgroundAudioMediaThread != null) {
             isBackgroundAudioPlaying = false;
@@ -107,6 +113,7 @@ public class SoundManager {
         }
     }
 
+    //MusicThread class that extends java Thread. Run multiple instances of this class to play simultaneously multiple sources of audio
     public static class MusicThread extends Thread{
         public MediaPlayer mSoundPlayer;
         private boolean mIsRunning;
@@ -121,6 +128,7 @@ public class SoundManager {
             this.mIsRunning = false;
         }
 
+        //Main function that runs everytime a new thread is created
         public void run(){
             if (mSoundPlayer == null) return;
 

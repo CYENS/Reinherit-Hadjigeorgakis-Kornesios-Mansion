@@ -57,6 +57,7 @@ public class PerformanceController extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_performance_controller, container, false);
 
+        //remotely log any number of musicians to a specific station
         Slider slider2 = (Slider) view.findViewById(R.id.sliderMusicians);
         slider2.addOnChangeListener((slider1, value, fromUser) -> {
             try {
@@ -85,8 +86,6 @@ public class PerformanceController extends Fragment {
         btn6.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-// display a message by using a Toast
-                //Toast.makeText(getActivity(), "Music...", Toast.LENGTH_LONG).show();
                 try {
                     mViewModel.sendMessage(new JSONObject().put("id", Constants.COMMANDS.RAISE_VOLUME).toString());
                 } catch (JSONException e) {
@@ -99,8 +98,6 @@ public class PerformanceController extends Fragment {
         btn7.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-// display a message by using a Toast
-                //Toast.makeText(getActivity(), "Music...", Toast.LENGTH_LONG).show();
                 try {
                     mViewModel.sendMessage(new JSONObject().put("id", Constants.COMMANDS.LOWER_VOLUME).toString());
                 } catch (JSONException e) {
