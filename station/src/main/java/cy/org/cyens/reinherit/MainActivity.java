@@ -279,7 +279,7 @@ public class MainActivity extends AppCompatActivity {
     //start tracking people
     public void startTracking(){
         setStatus(mConnectionStatus, "Starting tracking");
-        mSoundManager.stopSound(0);
+        mSoundManager.playSound(0);
         mCameraManager.startTracking();
     }
 
@@ -558,9 +558,9 @@ public class MainActivity extends AppCompatActivity {
         Button button = findViewById(R.id.startStopButton);
         button.setOnClickListener(v -> {
             if (soundStopped) {
-                mSoundManager.stopSound(0);
+                startTracking();
             } else {
-                mSoundManager.stopSound(0);
+                stopTracking();
             }
             soundStopped = !soundStopped;
         });

@@ -176,7 +176,7 @@ public class CalibrationController extends Fragment {
             }
         });
         Button btnCameraOff = (Button) view.findViewById(R.id.cameraOffButton);
-        btn5.setOnClickListener(new View.OnClickListener() {
+        btnCameraOff.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
@@ -204,6 +204,8 @@ public class CalibrationController extends Fragment {
             while(!messages.isEmpty()) {
                 String next_message = messages.remove();
                 mLastStatusView.setText(next_message);
+
+                ////
             }
         });
     }

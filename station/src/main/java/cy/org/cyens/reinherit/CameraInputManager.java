@@ -211,6 +211,7 @@ public class CameraInputManager {
 
     public void stopTracking() {
         mUpdateTracking = false;
+        resetPersonCounterData();
     }
     //endregion Camera Manager *********************************************************************
 

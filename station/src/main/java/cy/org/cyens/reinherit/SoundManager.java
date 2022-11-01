@@ -100,6 +100,7 @@ public class SoundManager {
         if (index == 0 && backgroundAudioMediaThread != null) {
             isBackgroundAudioPlaying = false;
             backgroundAudioMediaThread.stopPlayback();
+            backgroundAudioMediaThread = null;
         }
 
         for(int i = index; i <= mMaxSounds; i++){
@@ -145,6 +146,9 @@ public class SoundManager {
                 e.printStackTrace();
             }
             mSoundPlayer.release();
+        }
+
+        public void continuePlayback() {
         }
     }
 }
