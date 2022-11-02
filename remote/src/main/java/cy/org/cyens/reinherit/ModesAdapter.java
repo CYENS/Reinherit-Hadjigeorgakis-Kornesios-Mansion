@@ -48,4 +48,23 @@ public class ModesAdapter extends FragmentPagerAdapter {
     public int getCount() {
         return totalTabs;
     }
+
+    public void selectTab(int tabPosition) {
+        switch (tabPosition) {
+            case 0:
+                if (mPerformanceControllerFragment == null) return;
+                mPerformanceControllerFragment.activate();
+            case 1:
+                if (mCalibrationControllerFragment == null) return;
+                mCalibrationControllerFragment.activate();
+            default:
+        }
+    }
+
+    public void unselectTab(int tabPosition) {
+        if (tabPosition == 0 && mPerformanceControllerFragment != null)
+            mPerformanceControllerFragment.deactivate();
+        if (tabPosition == 1 && mCalibrationControllerFragment != null)
+            mCalibrationControllerFragment.deactivate();
+    }
 }

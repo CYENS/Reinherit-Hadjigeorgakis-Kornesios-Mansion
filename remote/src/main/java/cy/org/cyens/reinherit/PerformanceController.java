@@ -37,9 +37,11 @@ public class PerformanceController extends Fragment {
     TimePickerDialog mClosingTimePicker;
     EditText mClosingTimeText;
     private TextView mLastStatusView;
+    boolean isVisible = false;
 
     public PerformanceController() {
         // Required empty public constructor
+        activate();
     }
 
     public static PerformanceController newInstance() {
@@ -207,10 +209,19 @@ public class PerformanceController extends Fragment {
         mLastStatusView = view.findViewById(R.id.text_last_status);
         mViewModel = new ViewModelProvider(requireActivity()).get(SharedViewModel.class);
         mViewModel.messagesFromBluetooth.observe(getViewLifecycleOwner(), messages -> {
+            if (!isVisible) return;
+
             while(!messages.isEmpty()) {
                 String next_message = messages.remove();
                 mLastStatusView.setText(next_message);
             }
         });
+    }
+
+    public void activate() {
+        isVisible = true;
+    }
+    public void deactivate() {
+        isVisible = false;
     }
 }

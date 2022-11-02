@@ -30,6 +30,11 @@ public class CalibrationController extends Fragment {
     private SharedViewModel mViewModel;
     private TextView mLastStatusView;
 
+    private Slider mSliderMaxValue;
+    private Slider mSliderMinValue;
+    private Slider mSliderWeight;
+    boolean isVisible = false;
+
     public CalibrationController() {
         // Required empty public constructor
     }
@@ -49,8 +54,8 @@ public class CalibrationController extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_calibration_controller, container, false);
 
-        Slider slider3 = (Slider) view.findViewById(R.id.sliderMaxValue);
-        slider3.addOnChangeListener((slider1, value, fromUser) -> {
+        mSliderMaxValue = (Slider) view.findViewById(R.id.sliderMaxValue);
+        mSliderMaxValue.addOnChangeListener((slider1, value, fromUser) -> {
             try {
                 mViewModel.sendMessage(new JSONObject().put("id", Constants.COMMANDS.SET_MAX_VALUE).put("val",value).toString());
             } catch (JSONException e) {
@@ -58,8 +63,8 @@ public class CalibrationController extends Fragment {
             }
         });
 
-        Slider slider4 = (Slider) view.findViewById(R.id.sliderMinValue);
-        slider4.addOnChangeListener((slider1, value, fromUser) -> {
+        mSliderMinValue = (Slider) view.findViewById(R.id.sliderMinValue);
+        mSliderMinValue.addOnChangeListener((slider1, value, fromUser) -> {
             try {
                 mViewModel.sendMessage(new JSONObject().put("id", Constants.COMMANDS.SET_MIN_VALUE).put("val",value).toString());
             } catch (JSONException e) {
@@ -67,8 +72,8 @@ public class CalibrationController extends Fragment {
             }
         });
 
-        Slider slider5 = (Slider) view.findViewById(R.id.sliderWeight);
-        slider5.addOnChangeListener((slider1, value, fromUser) -> {
+        mSliderWeight = (Slider) view.findViewById(R.id.sliderWeight);
+        mSliderWeight.addOnChangeListener((slider1, value, fromUser) -> {
             try {
                 mViewModel.sendMessage(new JSONObject().put("id", Constants.COMMANDS.SET_WEIGHT).put("val",value).toString());
             } catch (JSONException e) {
@@ -201,12 +206,31 @@ public class CalibrationController extends Fragment {
         mLastStatusView = view.findViewById(R.id.text_last_status);
         mViewModel = new ViewModelProvider(requireActivity()).get(SharedViewModel.class);
         mViewModel.messagesFromBluetooth.observe(getViewLifecycleOwner(), messages -> {
+            if (!isVisible) return;
+
             while(!messages.isEmpty()) {
                 String next_message = messages.remove();
                 mLastStatusView.setText(next_message);
 
-                ////
+                String fullVariablesString = next_message.split("\n")[2];
+                fullVariablesString = fullVariablesString.replace(")", "").replace("\t"," ");
+                fullVariablesString = fullVariablesString.replace(")", "");
+                String[] variables = fullVariablesString.split(" ");
+                float weight = Float.parseFloat(variables[1]);
+                float min  = Float.parseFloat(variables[4]);
+                float max = Float.parseFloat(variables[6]);
+
+                mSliderMinValue.setValue(min);
+                mSliderMaxValue.setValue(max);
+                mSliderWeight.setValue(weight);
             }
         });
+    }
+
+    public void activate() {
+        isVisible = true;
+    }
+    public void deactivate() {
+        isVisible = false;
     }
 }

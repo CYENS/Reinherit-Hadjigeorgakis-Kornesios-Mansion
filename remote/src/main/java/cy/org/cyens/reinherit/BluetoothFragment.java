@@ -218,10 +218,14 @@ public class BluetoothFragment extends Fragment {
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
-                viewPager.setCurrentItem(tab.getPosition());
+                int tabPosition = tab.getPosition();
+                viewPager.setCurrentItem(tabPosition);
+                adapter.selectTab(tabPosition);
             }
             @Override
             public void onTabUnselected(TabLayout.Tab tab) {
+                int tabPosition = tab.getPosition();
+                adapter.unselectTab(tabPosition);
             }
             @Override
             public void onTabReselected(TabLayout.Tab tab) {
